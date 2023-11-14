@@ -2,3 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
+
+# ignore ALL files in ANY directory named data
+data/
