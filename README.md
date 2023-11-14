@@ -1,4 +1,3 @@
-# group_23_project
 Final project for the R for Bio-Data Science course (22160) - Group 23
 
 The original data used for this project comes from the following study available in: https://www.kaggle.com/datasets/piotrgrabo/breastcancerproteomes/data?select=77_cancer_proteomes_CPTAC_itraq.csv
