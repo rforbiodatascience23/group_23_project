@@ -10,6 +10,8 @@ editor: visual
 # 01. Load the data
 
 ```{r}
+#| eval: true 
+#| message: false
 library(tidyverse)
 ```
 
@@ -29,12 +31,12 @@ clinical <- read.csv("../data/_raw/clinical_data_breast_cancer.csv")
 ```{r}
 #| eval: true 
 PAM50 |> 
-  write_tsv(file = "../data/PAM50_proteins.tsv")
+  write_tsv(file = "../data/01_load_PAM50.tsv")
 
 proteomes_77 |> 
-  write_tsv(file = "../data/77_cancer_proteomes_CPTAC_itraq.tsv")       
+  write_tsv(file = "../data/01_load_77_proteomes.tsv")       
 
 clinical |> 
-  write_tsv(file = "../data/clinical_data_breast_cancer.tsv")    
+  write_tsv(file = "../data/01_load_clinical.tsv")    
 
 ```
