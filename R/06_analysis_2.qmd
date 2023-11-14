@@ -1,0 +1,8 @@
+---
+title: "06_analysis_2"
+author: "Group_23"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
