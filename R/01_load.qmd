@@ -5,32 +5,14 @@ format: html
 editor: visual
 ---
 
-## 01. Loading the raw data 
+
+## 01. Loading the raw data
+
+Raw data has to be downloaded to `/data/_raw` directory from [Kaggle](https://www.kaggle.com/datasets/piotrgrabo/breastcancerproteomes/data/). The data could not be retrieved automatically from the server, and the data will not be loaded in the project repository on GitHub. If you are executing this end-to-end be sure that the `77_cancer_proteomes_CPTAC_itraq.csv` is unzipped in your own \_raw directory.
 
 ```{r}
-#| echo: false
-#| eval: false
-
-library(tidyverse)
+PAM50 <- read.csv("../data/_raw/PAM50_proteins.csv")
+proteomes_77 <- read.csv("../data/_raw/77_cancer_proteomes_CPTAC_itraq.csv")
+clinical <- read.csv("../data/_raw/clinical_data_breast_cancer.csv")
 ```
 
-```{r}
-
-# Load metadata
-raw_metadata <- read_csv(file = "../data/_raw/brain_metadata.csv")
-raw_metadata
-```
-
-```{r}
-
-# Load counts
-raw_counts <- read_csv(file = "../data/_raw/brain_counts.csv")
-raw_counts
-```
-
-```{r}
-raw_metadata$ |>
-  unique()
-```
-
-Saving the
