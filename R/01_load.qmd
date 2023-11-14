@@ -1,0 +1,8 @@
+---
+title: "01_load"
+author: "Group_23"
+format: html
+editor: visual
+---
+
+## 01. Loading the raw data 
