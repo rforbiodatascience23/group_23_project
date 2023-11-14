@@ -122,9 +122,23 @@ which(colMeans(is.na(clinical)) != 0)
 
 We can see how the column with missing values is in this case the one named Days.to.date.of.Death, as some of the individuals in the study did not die before the end of the study (censored data).
 
-It is also interesting if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row:
+The names in the first column of the clinical data should be the same as the rownames for the 77 proteome data, at least the columns which correspond to cancer patients. Nevertheless the number of rows in the clinical data is 105, while the number of samples for which we have proteomes is due to the low quality of 28 of the samples, where analysis concluded that they were severely compromised by protein degradation. In addition the names of the samples are not parsed in the same way, therefore in order to
 
 ```{r}
-sum(which(rowMeans(is.na(proteomes_77)) > 0.4))
-sum(which(rowMeans(is.na(proteomes_77)) > 0))
+head(proteomes_77)
+```
+
+```{r}
+head(clinical)
+```
+
+There are 3 samples duplicated, see how can we manage this; but 86(columns in proteomes)-3(initial with no samples)-3(helathy individuals)=80; it should be 77, but there are two duplicates. See if we can just a tag like, \_01 and 02; they do not have the same information, the values are different.
+
+```{r}
+proteomes_77 %>% 
+rename_with(~ str_replace(., "^(\\w{2})\\.(\\w{4})\\.(\\d{2})TCGA$", "TCGA-\\1-\\2"), everything())
+```
+
+```{r}
+dim(proteomes_77)
 ```
