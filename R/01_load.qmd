@@ -10,6 +10,8 @@ editor: visual
 # 01. Load the data
 
 ```{r}
+#| eval: true 
+#| message: false
 library(tidyverse)
 ```
 

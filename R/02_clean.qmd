@@ -6,3 +6,125 @@ format:
     embed-resources: true
 editor: visual
 ---
+
+# 02. Clean data
+
+```{r}
+#| eval: true 
+#| message: false
+library(tidyverse)
+```
+
+# Load data from .tsv files
+
+```{r}
+proteomes_77 <- read.delim("../data/01_load_77_proteomes.tsv")
+clinical <- read.delim("../data/01_load_clinical.tsv")
+PAM50 <- read.delim("../data/01_load_PAM50.tsv")
+```
+
+# 77 Proteomes 
+
+Brief description of what it includes. From Kaggle:
+
+-   The rows represent the different genes
+
+-   RefSeq_accession_number: RefSeq protein ID (each protein has a unique\
+    ID in a RefSeq database)
+
+-   gene_symbol: a symbol unique to each gene (every protein is encoded\
+    by some gene)
+
+-   gene_name: a full name of that gene\
+    Remaining columns: log2 iTRAQ ratios for each sample (protein\
+    expression data, most important), being a total of 77 samples, three last columns are from healthy\
+    individuals
+
+### Some exploratory analysis
+
+A brief look at the data:
+
+```{r}
+head(proteomes_77)
+```
+
+Dimension of the data:
+
+```{r}
+dim(proteomes_77)
+```
+
+We can see from the brief initial look that there are some missing values in the data. Let's take a look at the missing values:
+
+```{r}
+# How many values in total are missing
+sum(is.na(proteomes_77))
+
+# Percentage of missing values
+mean(is.na(proteomes_77))
+```
+
+As in this case the columns (except the 3 first ones) correspond to the samples, it can be interesting to see how many missing values are there per sample, which in this case is per column. If there are some samples with a great amount of NA values maybe it should not be considered.
+
+```{r}
+colMeans(is.na(proteomes_77))
+```
+
+It is also interesting if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row:
+
+```{r}
+sum(which(rowMeans(is.na(proteomes_77)) > 0.4))
+sum(which(rowMeans(is.na(proteomes_77)) > 0))
+```
+
+TO BE CONTINUE LATER
+
+# Clinical data 
+
+Brief description of what it includes. From Kaggle:
+
+-   First column "Complete TCGA ID" is used to match the sample IDs in the main cancer proteomes file (see example script).\
+    All other columns have self-explanatory names, contain data about the cancer classification of a given sample using different methods. 'PAM50 mRNA' classification is being used in the example script.
+
+### Some exploratory analysis
+
+A brief look at the data:
+
+```{r}
+head(clinical)
+```
+
+Dimension of the data:
+
+```{r}
+dim(clinical)
+```
+
+We can see from the brief initial look that there are some missing values in the data. Let's take a look at the missing values:
+
+```{r}
+# How many values in total are missing
+sum(is.na(clinical))
+
+# Percentage of missing values
+mean(is.na(clinical))
+```
+
+We can check which columns have the most of missing values:
+
+```{r}
+# Percentage of missing values per column
+colMeans(is.na(clinical))
+
+# Which columns have missing values
+which(colMeans(is.na(clinical)) != 0)
+```
+
+We can see how the column with missing values is in this case the one named Days.to.date.of.Death, as some of the individuals in the study did not die before the end of the study (censored data).
+
+It is also interesting if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row:
+
+```{r}
+sum(which(rowMeans(is.na(proteomes_77)) > 0.4))
+sum(which(rowMeans(is.na(proteomes_77)) > 0))
+```
