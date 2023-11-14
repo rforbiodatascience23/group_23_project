@@ -12,7 +12,6 @@ More specifically for this project we will be using the following files:
 
 -   clinical_data_breast_cancer.csv: contains information related to the samples
 
-The data files are not included in the GitHub repository, as specified in the project requirements, instead the data is retrieved directly from the [GitHub](https://github.com/BCPP/BreastCancerProteomes/tree/master) repository where these can be found.
-
+The data files are not included in the GitHub repository, as specified in the project requirements. as the data could not be retrieved automatically from any web server, if you wish to execute this project end-to-end, you must download the correspondng files inside the `/data/_raw/` directory.
 
 The R folder contains all the scripts done for this project.
