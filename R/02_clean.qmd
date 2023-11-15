@@ -23,7 +23,7 @@ clinical <- read.delim("../data/01_load_clinical.tsv")
 PAM50 <- read.delim("../data/01_load_PAM50.tsv")
 ```
 
-# 77 Proteomes 
+# 77 Proteomes
 
 Brief description of what it includes. From Kaggle:
 
@@ -79,7 +79,7 @@ sum(which(rowMeans(is.na(proteomes_77)) > 0))
 
 TO BE CONTINUE LATER
 
-# Clinical data 
+# Clinical data
 
 Brief description of what it includes. From Kaggle:
 
@@ -135,10 +135,22 @@ head(clinical)
 There are 3 samples duplicated, see how can we manage this; but 86(columns in proteomes)-3(initial with no samples)-3(helathy individuals)=80; it should be 77, but there are two duplicates. See if we can just a tag like, \_01 and 02; they do not have the same information, the values are different.
 
 ```{r}
-proteomes_77 %>% 
-rename_with(~ str_replace(., "^(\\w{2})\\.(\\w{4})\\.(\\d{2})TCGA$", "TCGA-\\1-\\2"), everything())
+proteomes_77 <- proteomes_77 %>% 
+rename_with(
+  ~ make.unique(str_replace(., "^(\\w{2})\\.(\\w{4})\\.(\\d{2})TCGA$", "TCGA-\\1-\\2")), everything())
 ```
 
 ```{r}
 dim(proteomes_77)
+dim(clinical)
+```
+
+```{r}
+transposed_proteomes_77 <- setNames(as.data.frame(t(proteomes_77[-(1:3)])), proteomes_77$RefSeq_accession_number)
+transposed_proteomes_77 <- transposed_proteomes_77 |> rownames_to_column(var = "Complete.TCGA.ID") 
+```
+
+```{r}
+merged_df <- full_join(transposed_proteomes_77, clinical, by = "Complete.TCGA.ID")
+head(merged_df)
 ```
