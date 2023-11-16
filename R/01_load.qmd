@@ -26,17 +26,71 @@ proteomes_77 <- read.csv("../data/_raw/77_cancer_proteomes_CPTAC_itraq.csv")
 clinical <- read.csv("../data/_raw/clinical_data_breast_cancer.csv")
 ```
 
+## Join the proteomes and clinical tables/tibbles?¿?¿
+
+The names in the first column of the clinical data should be the same as the rownames for the 77 proteome data, at least the columns which correspond to cancer patients.
+
+```{r}
+dim(proteomes_77)
+dim(clinical)
+```
+
+Nevertheless the number of rows in the clinical data is 105, while the number of samples for which we have proteomes is due to the low quality of 28 of the samples, where analysis concluded that they were severely compromised by protein degradation. In the `proteomes_77` table there are 86 columns:
+
+-   The first 3 contain information about the genes.
+
+-   The following 80 contain information about protein expression of 80 samples corresponding to breast cancer patients. There are however 77 samples corresponding to 77 individuals, and 3 samples which are duplicates (with different information, probably it is a re-sample).
+
+-   The final 3 contain information about protein expression of healthy individuals.
+
+In addition the names of the samples in the tables `proteomes_77` and `clinica`l are not parsed in the same way, therefore in order to be able to join them it is required to change the names of the IDs. In this case, it was decided to modify the names from the `proteomes_77` table to match those in the table clinical. As there are 3 samples for which there are duplicates, the duplicates will include a tag (\*\_1) so that there are not two columns with the same name.
+
+```{r}
+proteomes_77 <- proteomes_77 |>
+  rename_with(~ make.unique(str_replace(.,
+                                          "^(\\w{2})\\.(\\w{4})\\.(\\d{2})TCGA$",
+                                          "TCGA-\\1-\\2")),
+              everything())
+head(proteomes_77)
+```
+
+```{r}
+head(clinical)
+```
+
+Now that the IDs match, the tables should be merged. See how to do this with dplyr;!! we keep the gene symbol because we want to maybe use the PAM50 LATER.
+
+```{r}
+transposed_proteomes_77 <- setNames(as.data.frame(t(proteomes_77[-1][-2])),
+                                    proteomes_77$RefSeq_accession_number)
+transposed_proteomes_77 <- transposed_proteomes_77 |> 
+  rownames_to_column(var = "Complete.TCGA.ID") 
+head(transposed_proteomes_77)
+```
+
+```{r}
+
+```
+
+```{r}
+# merged_df <- full_join(transposed_proteomes_77,
+#                        clinical,
+#                        by = "Complete.TCGA.ID")
+# head(merged_df)
+```
+
+```{r}
+merged_df <- right_join(clinical,
+                       transposed_proteomes_77,
+                       by = "Complete.TCGA.ID")
+head(merged_df)
+```
+
 ## Save data as .tsv files in `/data` directory
 
 ```{r}
 #| eval: true 
-PAM50 |> 
-  write_tsv(file = "../data/01_load_PAM50.tsv")
-
-proteomes_77 |> 
-  write_tsv(file = "../data/01_load_77_proteomes.tsv")       
-
-clinical |> 
-  write_tsv(file = "../data/01_load_clinical.tsv")    
+transposed_proteomes_77 |> 
+  write_tsv(file = "../data/01_load_proteomes_and_clinical.tsv")
 
 ```
