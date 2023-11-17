@@ -31,6 +31,11 @@ clinical <- read.csv("../data/_raw/clinical_data_breast_cancer.csv")
 The names in the first column of the clinical data should be the same as the rownames for the 77 proteome data, at least the columns which correspond to cancer patients.
 
 ```{r}
+proteomes_77 <- as_tibble(proteomes_77)
+clinical <- as_tibble(clinical)
+```
+
+```{r}
 dim(proteomes_77)
 dim(clinical)
 ```
