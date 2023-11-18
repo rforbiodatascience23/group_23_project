@@ -15,17 +15,17 @@ editor: visual
 library(tidyverse)
 ```
 
-# Load data from .tsv files
+### Load data from .tsv files
 
 ```{r}
-proteomes_77 <- read.delim("../data/01_load_77_proteomes.tsv")
-clinical <- read.delim("../data/01_load_clinical.tsv")
-PAM50 <- read.delim("../data/01_load_PAM50.tsv")
+proteomes_clinical <- read.delim("../data/01_load_proteomes_and_clinical.tsv")
+gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
+
 ```
 
-# 77 Proteomes
+### Proteomes and clinical data
 
-Brief description of what it includes. From Kaggle:
+Brief description of what it includes. :
 
 -   The rows represent the different genes
 
