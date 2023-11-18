@@ -1,8 +1,123 @@
 ---
 title: "01_load"
 author: "Group_23"
-format: html
+format:
+  html:
+    embed-resources: true
 editor: visual
 ---
 
-## 01. Loading the raw data 
+# 01. Load the data
+
+```{r}
+#| eval: true 
+#| message: false
+library(tidyverse)
+```
+
+## 01.1 Loading the raw data from `/data/_raw` directory
+
+Raw data has to be downloaded to `/data/_raw` directory from [Kaggle](https://www.kaggle.com/datasets/piotrgrabo/breastcancerproteomes/data/). The data could not be retrieved automatically from the server, and the data will not be loaded in the project repository on GitHub. If you are executing this end-to-end be sure that the `77_cancer_proteomes_CPTAC_itraq.csv` is unzipped in your own \_raw directory.
+
+```{r}
+#| eval: true 
+PAM50 <- read.csv("../data/_raw/PAM50_proteins.csv")
+proteomes_77 <- read.csv("../data/_raw/77_cancer_proteomes_CPTAC_itraq.csv")
+clinical <- read.csv("../data/_raw/clinical_data_breast_cancer.csv")
+```
+
+## 01.2 Join the proteomes and clinical tables/tibbles
+
+The names in the first column of the clinical data should be the same as the rownames for the 77 proteome data, at least the columns which correspond to cancer patients.
+
+```{r}
+proteomes_77 <- as_tibble(proteomes_77)
+clinical <- as_tibble(clinical)
+```
+
+```{r}
+dim(proteomes_77)
+dim(clinical)
+```
+
+Nevertheless the number of rows in the clinical data is 105, while the number of samples for which we have proteomes is due to the low quality of 28 of the samples, where analysis concluded that they were severely compromised by protein degradation. In the `proteomes_77` table there are 86 columns:
+
+-   The first 3 contain information about the genes.
+
+-   The following 80 contain information about protein expression of 80 samples corresponding to breast cancer patients. There are however 77 samples corresponding to 77 individuals, and 3 samples which are duplicates (with different information, probably it is a re-sample).
+
+-   The final 3 contain information about protein expression of healthy individuals.
+
+In addition the names of the samples in the tables `proteomes_77` and `clinica`l are not parsed in the same way, therefore in order to be able to join them it is required to change the names of the IDs. In this case, it was decided to modify the names from the `proteomes_77` table to match those in the table clinical. As there are 3 samples for which there are duplicates, the duplicates will include a tag (\*\_1) so that there are not two columns with the same name.
+
+```{r}
+proteomes_77 <- proteomes_77 |>
+  rename_with(~ make.unique(str_replace(.,
+                                          "^(\\w{2})\\.(\\w{4})\\.(\\d{2})TCGA$",
+                                          "TCGA-\\1-\\2")),
+              everything())
+
+sample_n(proteomes_77, 10)
+```
+
+```{r}
+head(clinical)
+```
+
+Now that the IDs match, the tables should be merged. The main issue in this dataset is that the `proteomes_77` file has the information transposed in comparison with the `clinical` file, that is why we need to swap the columns and the rows, so now each row represents a sample and the columns refer to the gene expression values.
+
+To approach this, we are going to drop the columns `gene_symbol` and `gene_name`, as these two columns are not related to sample IDs. To do the transposing of the data frame, we use both *pivot_longer* and *pivot_wider* functions. First, we do a *pivot_longer* to gather the gene_expression values in a long format, with all of the sample IDs pivoted into row values. Now, we perform a *pivot_wider* to return to the wide format with the new rows defined by the sample IDs (`Complete.TCGA.ID` column in the `clinical_data_breast_cancer.csv`) and the columns defined by the `RefSeq_accession_number`.
+
+```{r}
+proteomes_77_pivot <- proteomes_77 |>
+  select(-gene_symbol, 
+         -gene_name) |>
+  pivot_longer(cols = -RefSeq_accession_number,
+               names_to = "Complete.TCGA.ID") |>
+  pivot_wider(names_from = RefSeq_accession_number, 
+              values_from = value)
+
+proteomes_77_pivot
+```
+
+Having the `proteomes_77` file pivoted to match the sample IDs of the `clinical` file, we can join both data frames into the final `01_dat_load.tsv` file with a *right_join*. The last rows of this final dataset, that corresponds to the 3 duplicated samples and the 3 healthy-individual observations, have some 'Na' values as these rows do not have information registered in the `clinical` file. Right now, we are not caring about fixing this issue, but it will be later fixed in the `02_clean.qmd` script.
+
+```{r}
+final_data <- right_join(clinical, 
+                         proteomes_77_pivot,
+                         by = "Complete.TCGA.ID")
+
+final_data
+```
+
+## 01.3 Save data as .tsv files in `/data` directory
+
+```{r}
+#| eval: true 
+final_data |> 
+  write_tsv(file = "../data/01_load_proteomes_and_clinical.tsv")
+
+```
+
+## 01.4 Additional metadata files
+
+As the `gene_symbol` and `gene_name` information does not completely fit in the `01_dat_load.tsv` data frame (as these variables are not samples with gene_expression values), we considered to create an additional file with this information for each `RefSeq_accession_number` (in case it could be useful for future analysis). The procedure followed to generate this extra file is the same as the one explained for pivoting the `proteomes_77` data frame.
+
+```{r}
+gene_metadata <- proteomes_77 |>
+  select(RefSeq_accession_number,
+         gene_symbol,
+         gene_name) |> 
+  pivot_longer(cols = -RefSeq_accession_number,
+               names_to = "Complete.TCGA.ID") |>
+  pivot_wider(names_from = RefSeq_accession_number, 
+              values_from = value)
+  
+gene_metadata
+```
+
+```{r}
+#| eval: true 
+gene_metadata |> 
+  write_tsv(file = "../data/01_load_gene_metadata.tsv")
+```
