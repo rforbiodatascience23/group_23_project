@@ -55,43 +55,93 @@ prot_cli |>
          -matches("^YP"),
          -Complete.TCGA.ID) |>
   summarise_all(~mean(is.na(.))) |>
-  select(where(~. > 0.3))
+  select(where(~. > 0.037))
 ```
 
 We can see how the column with missing values is in this case the one named Days.to.date.of.Death, as some of the individuals in the study did not die before the end of the study (censored data). This value should be replaced with the total number of days of the study. The rest of missing values in the part corresponding to the clinical information correspond to the samples of healthy patients (3/83=0.03614458).
 
+The paper where this data was published states: "
+
+Only 8 deaths occurred among the 77 patients, which are too few to provide sufficient statistical power for association analysis". Therefore it was considered that the column should be removed.
+
+```{r}
+clean_prot_cli <- prot_cli |>
+  select(-Days.to.date.of.Death)
+```
+
 ### 02.2.2. Proteomics data
+
+How many genes (proteins) are there for which there are not a single missing value?
+
+```{r}
+# Mean of NAs per column
+NAs_prots <- prot_cli |>
+  select(matches("^NP"),
+         matches("^XP"),
+         matches("^YP")) |>
+  summarise_all(~mean(is.na(.))) 
+
+# Number of columns without missing values
+NAs_prots |>
+  select(where(~. == 0)) |>
+  ncol()
+```
+
+There is a total of 7994 proteins for which there are not missing values. It is also interesting to check if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row, and select the rows for which there are more than 25% of missing values.
+
+```{r}
+NAs_prots |>
+  select(where(~. > 0.25)) |>
+  ncol()
+```
+
+With more than 10 % of missing values:
+
+```{r}
+NAs_prots |>
+  select(where(~. > 0.1)) |>
+  ncol()
+```
+
+We proceed to drop the columns corresponding to protein expression where the number of missing values is greater than 10%:
+
+```{r}
+clean_prot_cli <- clean_prot_cli |>
+  select(-(NAs_prots |>
+             select(where(~. > 0.1)) |>
+             colnames()
+           ))
+```
 
 It can be interesting to see how many missing values are there per sample. If there are some samples with a great amount of NA values maybe it should not be considered.
 
 ```{r}
-# prot_cli |>
-#   select(matches("^NP"),
-#          matches("^XP"),
-#          matches("^YP")) |>
-#   rowwise() |>
-#   summarise_all(~mean(is.na(.)))
-  
-```
-
-It is also interesting if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row, and select the rows for which there are more than 25% of missing values.
-
-```{r}
-prot_cli |>
+clean_prot_cli |>
   select(matches("^NP"),
          matches("^XP"),
          matches("^YP")) |>
-  summarise_all(~mean(is.na(.))) |>
-  select(where(~. > 0.25))
+  rowwise() |>
+  mutate(n_NAs = mean(is.na(across(everything())))) |>
+  filter(n_NAs > 0.1) |>
+  nrow()
 ```
 
+Should we do something with this?¿?¿?¿
+
+Regarding the columns which contain missing values, but in a percentage smaller than 10%, it was decided that those missing values would be imputed using the mean; it could also be the median, or using Random Forest imputation which is one of the recommended according to this [paper](https://www.nature.com/articles/s41598-021-81279-4).
+
 ```{r}
-prot_cli |>
+clean_prot_cli <- clean_prot_cli |>
   select(matches("^NP"),
          matches("^XP"),
          matches("^YP")) |>
-  summarise_all(~mean(is.na(.))) |>
-  select(where(~. > 0.5))
+  mutate(across(everything(), ~replace_na(., mean(., na.rm=TRUE))))
 ```
 
-# 
+## 02.3. Save the new data in a .tsv file
+
+```{r}
+#| eval: true 
+clean_prot_cli |> 
+  write_tsv(file = "../data/02_dat_clean.tsv")
+```

@@ -113,29 +113,6 @@ final_data <- right_join(clinical,
 final_data
 ```
 
-```{r}
-final_data %>%
-  group_by(Complete.TCGA.ID = sub("\\.1$", "", Complete.TCGA.ID))
-```
-
-```{r}
-
-
-final_data |>
-  select(ends_with(".1")) |>
-  names()
-
-
-# Iterate through columns ending with ".1"
-for (col in duplicates) {
-  # Extract the information without ".1"
-  original <- gsub("\\.1$", "", col)
-  
-  # Duplicate the columns without ".1"
-  final_data[[original]] <- final_data[[col]]
-}
-```
-
 ## 01.3 Save data as .tsv files in `/data` directory
 
 ```{r}
