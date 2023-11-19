@@ -113,7 +113,7 @@ clean_prot_cli <- clean_prot_cli |>
            ))
 ```
 
-It can be interesting to see how many missing values are there per sample. If there are some samples with a great amount of NA values maybe it should not be considered.
+It can be interesting to see how many missing values are there per sample. If there are some samples with a great amount of NA values, maybe they should not be considered.
 
 ```{r}
 clean_prot_cli |>
@@ -132,10 +132,10 @@ Regarding the columns which contain missing values, but in a percentage smaller 
 
 ```{r}
 clean_prot_cli <- clean_prot_cli |>
-  select(matches("^NP"),
-         matches("^XP"),
-         matches("^YP")) |>
-  mutate(across(everything(), ~replace_na(., mean(., na.rm=TRUE))))
+  mutate_at(vars(starts_with("XP") | starts_with("YP") | starts_with("NP")),
+            ~replace_na(.,
+                        mean(.,
+                            na.rm = TRUE)))
 ```
 
 ## 02.3. Save the new data in a .tsv file
