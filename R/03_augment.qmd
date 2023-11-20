@@ -1,5 +1,5 @@
 ---
-title: "04_augment"
+title: "03_augment"
 author: "Group_23"
 format:
   html:
@@ -7,7 +7,7 @@ format:
 editor: visual
 ---
 
-# 04. Augment data
+# 03. Augment data
 
 ```{r}
 #| eval: true 
@@ -15,16 +15,16 @@ editor: visual
 library(tidyverse)
 ```
 
-## 04.1. Load data from .tsv files
+## 03.1. Load data from .tsv files
 
 ```{r}
 prot_clin_cl <- read.delim("../data/02_dat_clean.tsv")
 gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
 ```
 
-## 04.2. Data augmentation
+## 03.2. Data augmentation
 
-### 04.2.1. Add intervals for Age at initial pathological diagnosis
+### 03.2.1. Add intervals for Age at initial pathological diagnosis
 
 For further analysis, it may be useful to group individuals by age intervals. This will allow us to elucidate if certain aspects regarding breast cancer are related to age. Before deciding on how to define the age intervals, it is useful to look at the age of the youngest and oldest individuals at the initial pathological diagnosis.
 
@@ -67,9 +67,9 @@ prot_clin_cl <- prot_clin_cl |>
   rename(Age.at.Initial.Pathologic.Diagnosis = Age)
 ```
 
-### 04.2.2. Targeting Triple-negative breast cancer (TNBC)
+### 03.2.2. Targeting Triple-negative breast cancer (TNBC)
 
-Triple-negative breast cancer (TNBC) refers to cancers that lack expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). It may be interesting to identify the individuals suffering from TNBC because this type of breast cancer tends to be more aggressive than others and, unlike other breast cancer subtypes, there are no approved targeted treatments available. TFor instance, TNBC are not responsive to hormonal therapy. Thus, treatments may include chemotherapy. Furthermore, even if TNBC tumor cells are sensitive to chemotherapy, early relapse and visceral metastasis are common in this type of breast cancer.
+Triple-negative breast cancer (TNBC) refers to cancers that lack expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). It may be interesting to identify the individuals suffering from TNBC because this type of breast cancer tends to be more aggressive than others and, unlike other breast cancer subtypes, there are no approved targeted treatments available. For instance, TNBC are not responsive to hormonal therapy. Thus, treatments may include chemotherapy. Furthermore, even if TNBC tumor cells are sensitive to chemotherapy, early relapse and visceral metastasis are common in this type of breast cancer.
 
 More interesting information, that we can use for the "Analysis" part:
 
@@ -105,7 +105,7 @@ prot_clin_cl <- prot_clin_cl |>
 
 ```
 
-### 04.2.3. ER/PR/HER2 status
+### 03.2.3. ER/PR/HER2 status
 
 TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negative. However, it might be interesting to study other combinations as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`.
 
@@ -126,7 +126,7 @@ prot_clin_cl <- prot_clin_cl |>
   )
 ```
 
-### 04.2.4. Simplify AJCC stages
+### 03.2.4. Simplify AJCC stages
 
 The American Joint Committee on Cancer (AJCC) for breast cancer is a staging system for classifying the extent of a cancer based on the size of the tumor (T), lymph node involvement (N), and the presence or absence of metastasis (M).
 
@@ -145,11 +145,11 @@ prot_clin_cl <- prot_clin_cl |>
   )
 ```
 
-## 04.3. Drop redundant columns
+## 03.3. Drop redundant columns
 
 Discuss this.
 
-## 04.4. Save the new data in a .tsv file
+## 03.4. Save the new data in a .tsv file
 
 ```{r}
 prot_clin_cl |> 
