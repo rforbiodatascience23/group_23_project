@@ -1,0 +1,93 @@
+---
+title: "04_describe"
+author: "Group_23"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+# 04 Describe data
+
+```{r}
+#| eval: true 
+#| message: false
+library(tidyverse)
+```
+
+## 04.1. Load data from .tsv files
+
+```{r}
+prot_clin_cl <- read.delim("../data/03_dat_aug.tsv")
+gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
+```
+
+## 04.2. Descriptive statistics
+
+In this segment we will focus in the main characteristics of each attribute, such as number of patients per group, mean median, standard deviation, variance, range, and quantiles.
+
+### 04.2.1. Gender distribution
+
+First we will take a look at the number of male and female samples.
+
+```{r}
+prot_clin_cl |>
+  count(Gender)
+```
+
+As expected, the great majority of samples were taken from female patients, since according to the World Health Organization (WHO), only approximately 0.5-1% of breast cancers occur in men (data from 12 jul 2023). Three of the samples are not classified either as male or female.
+
+### 04.2.2. Age at initial pathological diagnosis distribution
+
+This was previously discussed in the augmentation file for dividing the samples in age ranges, but here we will focus more in the mean and other statistically relevant data.
+
+```{r}
+prot_clin_cl |>
+  summarise(na_count = sum(is.na(Age.at.Initial.Pathologic.Diagnosis)),
+            mean = mean(as.numeric(Age.at.Initial.Pathologic.Diagnosis), na.rm = TRUE),
+            median = median(as.numeric(Age.at.Initial.Pathologic.Diagnosis), na.rm = TRUE),
+            sd = sd(as.numeric(Age.at.Initial.Pathologic.Diagnosis), na.rm = TRUE),
+            q25 = quantile(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 0.25, na.rm = TRUE),
+            q75 = quantile(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 0.75, na.rm = TRUE))
+```
+
+From these statistics we can infer that the mean age at which breast cancer is diagnosed is 59, with most of the cases being diagnosed between the age of 49 and the age of 67. This matches the information provided by the WHO, that estimates that most of the cases, and hence the risk group for breast cancer, is women over 40 years old. The American Cancer Society establishes the median age at the time of breast cancer diagnosis in 62, and they claim that a very small number of women diagnosed with breast cancer are younger than 45. The distribution in our data is similar, being the median age at the time of breast cancer diagnosis 59 for the 83 samples in our data (3 NAs for age of the patient), close to the 62 provided by The American Cancer Society.
+
+### 04.2.3. ER and PR status
+
+These two columns make reference to the presence or absence of receptors that attach to the hormones estrogen and progesterone, and hence the tumorous cells need these hormones for the cells to grow.
+
+-   **ER-positive:** Breast cancers that have estrogen receptors are called ER-positive (or **ER+**) cancers.
+
+-   **PR-positive**: Breast cancers with progesterone receptors are called PR-positive (or **PR+**) cancers.
+
+Knowing the hormone receptor status of the cancer is important for choosing the adequate treatment: if the cancer has one or both of these hormone receptors, hormone therapy drugs can be used to either lower estrogen levels or stop estrogen from acting on breast cancer cells. About 3 of 4 breast cancers have at least one of these receptors. This percentage is higher in older women than in younger women, since hormone receptor-negative cancers are more common in women who have not yet gone through menopause. DCIS should also be checked for hormone receptors.
+
+```{r}
+prot_clin_cl |>
+  count(ER, PR)
+```
+
+Out of the 80 samples with this clinical data recorded, 26 patients are negative for both receptors (hormone receptor-negative), 10 patients are positive for the estrogen receptor, and 44 patients are positive for both receptors. In our data there are no samples only positive for the PR receptor.
+
+### 04.2.4. HER2 status
+
+According to The American Cancer Society,about 15% to 20% of breast tumors have higher levels of a protein known as HER2 (human epidermal growth factor receptor 2 ). These cancers are called HER2-positive breast cancers and tend to grow and spread faster than breast cancers that are HER2-negative, but are much more likely to respond to treatment with drugs that target the HER2 protein.
+
+```{r}
+prot_clin_cl |>
+  count(HER2)
+```
+
+Out of the 80 samples with this clinical data recorded (3 samples have NA values for this attribute), 60 patients are HER-2 negative, 19 HER-2 positive and 1 is equivocal. This "equivocal" corresponds to a result of 2+ in the immunohistochemistry (IHC) test, which is one of the tests used to find out if cancer cells have a high level of the HER2 protein. It means that the HER2 status needs to be tested with fluorescence in situ hybridization **(**FISH) test to clarify the result.
+
+### 04.2.5. Triple-negative breast cancer (TNBC) case count
+
+Triple-negativebreast tumors don\'t have too much HER2 and also don\'t have estrogen or progesterone receptors. Hormone therapy and drugs that target HER2 are not helpful in treating these cancers, but chemotherapy is still useful. These cancers tend to be more common in women younger than 40 years of age, who are Black, or who have a mutation in the *BRCA1* gene. Triple-negative breast cancers grow and spread faster than most other types of breast cancer.
+
+```{r}
+prot_clin_cl |>
+  count(ER, PR, HER2) 
+```
+
+From this table we can extract that 19 patients are TNBC, while 8 patients are triple positive. The 53 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels.
