@@ -15,23 +15,18 @@ editor: visual
 library(tidyverse)
 ```
 
-##  04.1. Load data from .tsv files
+## 04.1. Load data from .tsv files
 
 ```{r}
 prot_clin_cl <- read.delim("../data/02_dat_clean.tsv")
 gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
 ```
 
-##  04.2. Data augmentation
+## 04.2. Data augmentation
 
 ### 04.2.1. Add intervals for Age at initial pathological diagnosis
 
-```{r}
-
-# For further analysis, it may be useful to group individuals by age intervals. This will allow us to elucidate if certain aspects regarding breast cancer are related to age. Before deciding on how to define the age intervals, it is useful to look at the age of the youngest and oldest individuals at the initial pathological diagnosis.
-
-# I am writing this here because otherwise I get an error :/
-```
+For further analysis, it may be useful to group individuals by age intervals. This will allow us to elucidate if certain aspects regarding breast cancer are related to age. Before deciding on how to define the age intervals, it is useful to look at the age of the youngest and oldest individuals at the initial pathological diagnosis.
 
 ```{r}
 prot_clin_cl |>
@@ -41,15 +36,16 @@ prot_clin_cl |>
   ) 
 ```
 
-```{r}
-# Given the range of ages at the initial pathological diagnosis, we thought of defining the following categories: [30, 40), [40, 50, [50, 60), [60. 70), [70, 80), and [80, 90). As shown in the histogram below, there are individuals for all intervals, even if some are contain far more samples than others.
-```
+Given the range of ages at initial pathological diagnosis, we thought of defining the following categories: `[30,40)`, `[40,50)`, `[50,60)`, `[60,70)`, `[70, 80)` and `[80, 90)`. As shown in the histogram below, there are individuals for all intervals, even if some contain far more samples than others.
 
 ```{r}
 ggplot(data = prot_clin_cl,
        mapping = aes(x = Age.at.Initial.Pathologic.Diagnosis)) +
-  geom_histogram(bins =5, fill = "cornflowerblue", color = "black", alpha = 0.7) +
-  theme_minimal() 
+  geom_histogram(bins =6, fill = "cornflowerblue", color = "black", alpha = 0.7) +
+  theme_minimal() +
+  labs(x = "Age Group at Initial Pathological Diagnosis",
+       y = "Count") +
+  scale_x_continuous(breaks = seq(30, 90, by = 10), limits = c(30, 90))
 ```
 
 Hence, we create a new column that classifies each individual into an age group. With the aim of writing a cleaner code, before adding the new column we rename the column `Age.Ini.Diagnostic.group` as `Age`, but restore the original name once the new variable has been created.
@@ -77,11 +73,11 @@ Triple-negative breast cancer (TNBC) refers to cancers that lack expression of t
 
 More interesting information, that we can use for the "Analysis" part:
 
-"TNBC is characterized by its unique molecular profile, aggressive behavior, distinct patterns of metastasis, and lack of targeted therapies. Although not synonymous, the majority of triple-negative breast cancers carry the **\"basal-like\"** molecular profile on gene expression arrays. The majority of BRCA1-associated breast cancers are triple-negative and basal-like; the extent to which the BRCA1 pathway contributes to the behavior of sporadic basal-like breast cancers is an area of active research. Epidemiologic studies illustrate a high prevalence of triple-negative breast cancers among **younger** women and those of African descent. Increasing evidence suggests that the risk factor profile differs between this subtype and the more common luminal subtypes. Although sensitive to chemotherapy, early relapse is common and a predilection for visceral metastasis, including brain metastasis, is seen."
+"TNBC is characterized by its unique molecular profile, aggressive behavior, distinct patterns of metastasis, and lack of targeted therapies. Although not synonymous, the majority of triple-negative breast cancers carry the **"basal-like"** molecular profile on gene expression arrays. The majority of BRCA1-associated breast cancers are triple-negative and basal-like; the extent to which the BRCA1 pathway contributes to the behavior of sporadic basal-like breast cancers is an area of active research. Epidemiologic studies illustrate a high prevalence of triple-negative breast cancers among **younger** women and those of African descent. Increasing evidence suggests that the risk factor profile differs between this subtype and the more common luminal subtypes. Although sensitive to chemotherapy, early relapse is common and a predilection for visceral metastasis, including brain metastasis, is seen."
 
 Add references :
 
--    <https://www.uptodate.com/contents/er-pr-negative-her2-negative-triple-negative-breast-cancer/print#:~:text=Triple%2Dnegative%20breast%20cancer%20(TNBC,other%20types%20of%20breast%20cancer.>
+-   <https://www.uptodate.com/contents/er-pr-negative-her2-negative-triple-negative-breast-cancer/print#:~:text=Triple%2Dnegative%20breast%20cancer%20(TNBC,other%20types%20of%20breast%20cancer.>
 
 -   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2868264/>
 
@@ -130,7 +126,7 @@ prot_clin_cl <- prot_clin_cl |>
   )
 ```
 
-### 04.2.4. Simplify AJCC stages 
+### 04.2.4. Simplify AJCC stages
 
 The American Joint Committee on Cancer (AJCC) for breast cancer is a staging system for classifying the extent of a cancer based on the size of the tumor (T), lymph node involvement (N), and the presence or absence of metastasis (M).
 
@@ -149,11 +145,11 @@ prot_clin_cl <- prot_clin_cl |>
   )
 ```
 
-##  04.3. Drop redundant columns
+## 04.3. Drop redundant columns
 
 Discuss this.
 
-##  04.4. Save the new data in a .tsv file
+## 04.4. Save the new data in a .tsv file
 
 ```{r}
 prot_clin_cl |> 
