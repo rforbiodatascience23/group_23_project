@@ -26,6 +26,8 @@ gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
 
 In this segment we will focus in the main characteristics of each attribute, such as number of patients per group, mean median, standard deviation, variance, range, and quantiles.
 
+As a remark before starting this analysis and as we mentioned in the cleaning, we kept NAs for the clinical data of the 3 healthy patients, since these samples will be useful for our analysis and we can not drop them, but filling these data with invented or random values would be misleading. Hence, in most of the statistical analysis that follows 3 NA values will appear for the clinical attributes.
+
 ### 04.2.0 Dimensions
 
 ```{r}
@@ -33,6 +35,10 @@ dim(prot_clin_cl)
 ```
 
 The final data set contains 83 observations and 9367 variables.
+
+### 04.2.1. Complete TCGA ID
+
+The first column contains the IDs for the 80 patients, 77 with breast cancer and 3 healthy. 3 IDs were repeated, probably because they analysed two different samples from the same patient, so in these three cases the Complete_TCGA_ID is followed by a .1 in the repeated sample. As discussed before, these three samples did not have clinical data, but since they come from the patient with the same repeated Complete_TCGA_ID, we just copied the data into these .1 samples.
 
 ### 04.2.1. Gender distribution
 
@@ -47,7 +53,7 @@ As expected, the great majority of samples were taken from female patients, sinc
 
 ### 04.2.2. Age at initial pathological diagnosis distribution
 
-In the data augmentation section, the samples were grouped together by age, into 6 age groups. The age distribution amongst samples is shown in the histogram below, there are individuals for all intervals, even if some contain far more samples than others.
+In the data augmentation section, the samples were grouped together by age, into 6 age groups. The age distribution amongs samples is shown in the histogram below, there are individuals for all intervals, even if some contain far more samples than others.
 
 ```{r}
 prot_clin_cl %>% 
@@ -136,11 +142,11 @@ Out of the 80 samples with this clinical data recorded (3 samples have NA values
 
 ### 04.2.5. Triple-negative breast cancer (TNBC) case count
 
-Triple-negative breast tumors don't have too much HER2 and also don't have estrogen or progesterone receptors. Hormone therapy and drugs that target HER2 are not helpful in treating these cancers, but chemotherapy is still useful. These cancers tend to be more common in women younger than 40 years of age, who are Black, or who have a mutation in the *BRCA1* gene. Triple-negative breast cancers grow and spread faster than most other types of breast cancer.
+Triple-negative breast tumors don't have too much HER2 and also don't have estrogen or progesterone receptors. Hormone therapy and drugs that target HER2 are not helpful in treating these cancers, but chemotherapy is still useful. These cancers tend to be more common in women younger than 40 years of age, and those who are African descent, or who have a mutation in the *BRCA1* gene. Triple-negative breast cancers grow and spread faster than most other types of breast cancer. Furthermore, even if TNBC tumor cells are sensitive to chemotherapy, early relapse and visceral metastasis are common in this type of breast cancer.
 
 ```{r}
 prot_clin_cl |>
-  count(ER, PR, HER2) 
+  count(TNBC) 
 ```
 
-From this table we can extract that 19 patients are TNBC, while 8 patients are triple positive. The 53 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels.
+From this table we can extract that 19 patients are TNBC, while 8 patients are triple positive. The 61 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels.
