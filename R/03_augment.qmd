@@ -140,9 +140,9 @@ prot_clin_cl <- prot_clin_cl |>
 
 TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negative. However, it might be interesting to study other combinations as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`. We encoded them as:
 
--   0 : TNBC ER
+-   0 : TNBC
 
--   1: HER2 ER
+-   1: HER2
 
 -   2 : PR
 
@@ -224,6 +224,7 @@ Before proceeding further, we relocated the new columns before the proteomic col
 
 prot_clin_cl <- prot_clin_cl |> 
   relocate(Age.Ini.Diagnostic.group , .after = Age.at.Initial.Pathologic.Diagnosis) |>
+  relocate(Age.Menopausal.group, .after = Age.Ini.Diagnostic.group) |>
   relocate(TNBC, .after = HER2) |>
   relocate(ER_PR_HER2, .after = TNBC) |>
   relocate(AJCC.Simp, .after = Converted.Stage)
