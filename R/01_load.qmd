@@ -60,6 +60,18 @@ proteomes_77 <- proteomes_77 |>
 sample_n(proteomes_77, 10)
 ```
 
+As there are 3 duplicates, and the function `make.unique` will add a .1 t the end of the name to make it unique we should identify which samples are the duplicates. This is of high importance when later on we joined the proteomic data with the clinical data, as we will need to have the same clinical information for these duplicates.
+
+```{r}
+duplicates <- proteomes_77 |>
+  select(ends_with(".1")) |>
+  names()
+
+originals <- gsub("\\.1",
+                  "",
+                  duplicates)
+```
+
 ```{r}
 head(clinical)
 ```
@@ -78,6 +90,17 @@ proteomes_77_pivot <- proteomes_77 |>
               values_from = value)
 
 proteomes_77_pivot
+```
+
+Now, taking into account the duplicates, we will modify the clinical table to include the rows corresponding to the duplicates, using the names f the duplicates, so that after the join that it is intended to do, these samples do not contain NAs in their clinical information.
+
+```{r}
+clinical <- clinical |>
+  add_row(clinical |>
+            filter(Complete.TCGA.ID %in% originals) |>
+            mutate(Complete.TCGA.ID = paste0(Complete.TCGA.ID,
+                                             ".1")))
+  
 ```
 
 Having the `proteomes_77` file pivoted to match the sample IDs of the `clinical` file, we can join both data frames into the final `01_dat_load.tsv` file with a *right_join*. The last rows of this final dataset, that corresponds to the 3 duplicated samples and the 3 healthy-individual observations, have some 'Na' values as these rows do not have information registered in the `clinical` file. Right now, we are not caring about fixing this issue, but it will be later fixed in the `02_clean.qmd` script.

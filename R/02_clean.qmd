@@ -15,6 +15,7 @@ editor: visual
 library(tidyverse)
 ```
 
+<<<<<<< HEAD
 ### Load data from .tsv files
 
 ```{r}
@@ -55,102 +56,183 @@ dim(proteomes_77)
 ```
 
 We can see from the brief initial look that there are some missing values in the data. Let's take a look at the missing values:
+=======
+## 02.1. Load data from .tsv files
+
+```{r}
+prot_cli <- read.delim("../data/01_load_proteomes_and_clinical.tsv") |>
+  as_tibble()
+
+sample_n(prot_cli, 
+         10)
+```
+
+## 02.2. Dealing with missing values
+
+Let's take a look at the missing values:
+>>>>>>> 672a4d7e11b1678600713450510ccdaa46981d48
 
 ```{r}
 # How many values in total are missing
-sum(is.na(proteomes_77))
+sum(is.na(prot_cli))
 
-# Percentage of missing values
-mean(is.na(proteomes_77))
+# Ratio of missing values
+mean(is.na(prot_cli))
 ```
 
-As in this case the columns (except the 3 first ones) correspond to the samples, it can be interesting to see how many missing values are there per sample, which in this case is per column. If there are some samples with a great amount of NA values maybe it should not be considered.
+We can observe that there are around 110000 missing values in our data set, probably most of them coming from the protein expression columns. These missing values correspond to a bit more of a 10% of all of the values to our dataset, so therefore a cleaning of those NAs values is required. In addition, some NA values are also found in the clinical metadata information, as we saw in the `01_load.qmd` script.
+
+### 02.2.1. Clinical information
+
+Our dataset consists of proteome profiling data and clinical records from breast cancer patients. In addition, 3 more samples of healthy individuals were added to the proteome profiling data. As explained before, those three samples corresponding to healthy patients have no clinical information. Therefore, these 3 samples have NAs for all the columns corresponding to the clinical records information.
 
 ```{r}
-colMeans(is.na(proteomes_77))
+# Check the 3 rows with all the information as NA
+prot_cli |>
+  select(-matches("^NP"),
+         -matches("^XP"),
+         -matches("^YP")) |> 
+  filter(is.na(Gender))
 ```
 
-It is also interesting if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row:
+Regarding the rest of the samples, it can be checked if there are any missing values, and if there is a column for which the number of missing values is high. As we are aware these 3 healthy-individual samples out of the 83 are full of NAs (3/83=0.03614458), we should check for columns with a `mean.NA` value higher of that.
 
 ```{r}
-sum(which(rowMeans(is.na(proteomes_77)) > 0.4))
-sum(which(rowMeans(is.na(proteomes_77)) > 0))
+prot_cli |>
+  select(-matches("^NP"),
+         -matches("^XP"),
+         -matches("^YP"),
+         -Complete.TCGA.ID) |>
+  summarise_all(~mean(is.na(.))) |>
+  select(where(~. > 0.037))
 ```
 
-TO BE CONTINUE LATER
+We can observe that there is only 1 column (`Days.to.date.of.Death`) which seems to have more than 91% of their records as NA values. This column is referent to the number of days since the patient died after the last contact registered date (`Days.to.Date.of.Last.Contact`). Probably, most of the patients did not die during the time the experiment was running, which is why most of the rows have 'NA' in this column. As we are not interested in the time-series records of the patients for our analysis, the most convenient approach is to drop the columns related to it (`Survival.Data.Form`, `Days.to.Date.of.Last.Contact`, `Days.to.date.of.Death`, and `OS.time`), so we can get rid of the problematic 'NA' column. Additionally, we can drop `Vital.Status` as it has the same information as `OS.event` but 1-hot encoded.
 
-# Clinical data
-
-Brief description of what it includes. From Kaggle:
-
--   First column "Complete TCGA ID" is used to match the sample IDs in the main cancer proteomes file (see example script).\
-    All other columns have self-explanatory names, contain data about the cancer classification of a given sample using different methods. 'PAM50 mRNA' classification is being used in the example script.
-
-### Some exploratory analysis
-
-A brief look at the data:
+In addition, we have removed additional columns that we have concluded are redundant with other columns or because they are not relevant for further analysis.
 
 ```{r}
-head(clinical)
+clean_prot_cli <- prot_cli |>
+  select(-Survival.Data.Form) |>
+  select(-Days.to.date.of.Death) |>
+  select(-Days.to.Date.of.Last.Contact) |>
+  select(-OS.Time) |>
+  select(-Vital.Status) |>
+  select(-Tumor..T1.Coded) |>
+  select(-Metastasis.Coded) |>
+  select(-matches("Clust")) |>
+  rename(Vital.State = OS.event)
 ```
 
-Dimension of the data:
+Finally, we only have to deal with the 3 healthy samples that do not have clinical records as they do not have breast cancer. For maintaining these 3 records in case of future analysis, we have decided to keep those NAs in the clinical metadata columns, as we feel that adding 'invented' values could be not the best approach and could corrupt some of the future analysis (for example, in a clustering analysis).
 
 ```{r}
-dim(clinical)
+clean_prot_cli |>
+  filter(Complete.TCGA.ID == "X263d3f.I.CPTAC" | 
+           Complete.TCGA.ID == "blcdb9.I.CPTAC" | 
+           Complete.TCGA.ID == "c4155b.C.CPTAC")
 ```
 
-We can see from the brief initial look that there are some missing values in the data. Let's take a look at the missing values:
+### 02.2.2. Proteomics data
+
+First, we want to get a glimpse of how many genes (proteins) are there for which there are not a single missing value?
+
+```{r}
+# Mean of NAs per column
+NAs_prots <- prot_cli |>
+  select(matches("^NP"),
+         matches("^XP"),
+         matches("^YP")) |>
+  summarise_all(~mean(is.na(.))) 
+
+# Number of columns without missing values
+NAs_prots |>
+  select(where(~. == 0)) |>
+  ncol()
+```
+
+There is a total of 7994 proteins (out of the 12553 protein-expression-related columns) for which there are no missing values. This means that all samples have around 64% of the protein-expression data complete.
+
+It is also interesting to check if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row, and select the rows for which there are more than 25% of missing values.
+
+```{r}
+NAs_prots |>
+  select(where(~. > 0.25)) |>
+  ncol()
+```
+
+And with more than 10 % of missing values:
+
+```{r}
+NAs_prots |>
+  select(where(~. > 0.1)) |>
+  ncol()
+```
+
+We proceed to drop the columns corresponding to protein expression where the number of missing values is greater than 10% (which represents around 25.6% of the total protein-expression data). After this change, we have reduced the original data frame from 12582 columns to 9363 columns.
+
+```{r}
+clean_prot_cli <- clean_prot_cli |>
+  select(-(NAs_prots |>
+             select(where(~. > 0.1)) |>
+             colnames()
+           ))
+```
+
+Additionally, it can be interesting to see how many missing values are there per sample. If there are some samples with a great amount of NA values, maybe they should not be considered.
+
+```{r}
+clean_prot_cli |>
+  select(matches("^NP"),
+         matches("^XP"),
+         matches("^YP")) |>
+  rowwise() |>
+  mutate(n_NAs = mean(is.na(across(everything())))) |>
+  filter(n_NAs > 0.05) |>
+  nrow()
+```
+
+```{r}
+clean_prot_cli |>
+  select(matches("^NP"),
+         matches("^XP"),
+         matches("^YP")) |>
+  rowwise() |>
+  mutate(n_NAs = mean(is.na(across(everything())))) |>
+  filter(n_NAs > 0.1) |>
+  nrow()
+```
+
+It seems that there are only 3 samples that have more than 5% of NAs, but none of the samples have more than 10% of NAs. This suggests that we can continue using all of the samples, as there is no patient with a bad quality proteome profile.
+
+Regarding the columns that contain missing values, but in a percentage smaller than 10%, it was decided that those missing values would be imputed using the mean. It could also be the median, or using Random Forest imputation, which is one of the recommended according to [Jin et al., 2021](https://www.nature.com/articles/s41598-021-81279-4#citeas).
+
+```{r}
+clean_prot_cli <- clean_prot_cli |>
+  mutate_at(vars(starts_with("XP") | 
+                   starts_with("YP") | 
+                   starts_with("NP")),
+            ~ replace_na(.,
+                         mean(.,
+                              na.rm = TRUE)))
+```
+
+### 02.2.3. Final clean data set
+
+Now let's check if we have successfully removed all of the 'NA's data and achieved a clean and tidy data set. We have to keep in mind that our dataset is not 'fully' clean, as we have kept the 'NA's from the clinical metadata columns of the healthy individuals, which should be equal to 39 NAs (3 healthy samples multiplied by 13 columns related with clinical metadata information).
 
 ```{r}
 # How many values in total are missing
-sum(is.na(clinical))
+sum(is.na(clean_prot_cli))
 
-# Percentage of missing values
-mean(is.na(clinical))
+# Ratio of missing values
+mean(is.na(clean_prot_cli))
 ```
 
-We can check which columns have the most of missing values:
+## 02.3. Save the new data in a .tsv file
 
 ```{r}
-# Percentage of missing values per column
-colMeans(is.na(clinical))
-
-# Which columns have missing values
-which(colMeans(is.na(clinical)) != 0)
-```
-
-We can see how the column with missing values is in this case the one named Days.to.date.of.Death, as some of the individuals in the study did not die before the end of the study (censored data).
-
-The names in the first column of the clinical data should be the same as the rownames for the 77 proteome data, at least the columns which correspond to cancer patients. Nevertheless the number of rows in the clinical data is 105, while the number of samples for which we have proteomes is due to the low quality of 28 of the samples, where analysis concluded that they were severely compromised by protein degradation. In addition the names of the samples are not parsed in the same way, therefore in order to
-
-```{r}
-head(proteomes_77)
-```
-
-```{r}
-head(clinical)
-```
-
-There are 3 samples duplicated, see how can we manage this; but 86(columns in proteomes)-3(initial with no samples)-3(helathy individuals)=80; it should be 77, but there are two duplicates. See if we can just a tag like, \_01 and 02; they do not have the same information, the values are different.
-
-```{r}
-proteomes_77 <- proteomes_77 %>% 
-rename_with(
-  ~ make.unique(str_replace(., "^(\\w{2})\\.(\\w{4})\\.(\\d{2})TCGA$", "TCGA-\\1-\\2")), everything())
-```
-
-```{r}
-dim(proteomes_77)
-dim(clinical)
-```
-
-```{r}
-transposed_proteomes_77 <- setNames(as.data.frame(t(proteomes_77[-(1:3)])), proteomes_77$RefSeq_accession_number)
-transposed_proteomes_77 <- transposed_proteomes_77 |> rownames_to_column(var = "Complete.TCGA.ID") 
-```
-
-```{r}
-merged_df <- full_join(transposed_proteomes_77, clinical, by = "Complete.TCGA.ID")
-head(merged_df)
+#| eval: true 
+clean_prot_cli |> 
+  write_tsv(file = "../data/02_dat_clean.tsv")
 ```

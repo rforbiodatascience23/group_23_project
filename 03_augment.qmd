@@ -1,0 +1,212 @@
+---
+title: "03_augment"
+author: "Group_23"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+# 03. Augment data
+
+```{r}
+#| eval: true 
+#| message: false
+library(tidyverse)
+```
+
+## 03.1. Load data from .tsv files
+
+```{r}
+prot_clin_cl <- read.delim("../data/02_dat_clean.tsv")
+gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
+```
+
+## 03.2. Data augmentation
+
+### 03.2.1. Add intervals for Age at initial pathological diagnosis
+
+For further analysis, it may be useful to group individuals by age intervals. This will allow us to elucidate if certain aspects regarding breast cancer are related to age. Before deciding on how to define the age intervals, it is useful to look at the age of the youngest and oldest individuals at the initial pathological diagnosis.
+
+```{r}
+prot_clin_cl |>
+  summarize(
+    min_age = min(Age.at.Initial.Pathologic.Diagnosis, na.rm = TRUE),
+    max_age = max(Age.at.Initial.Pathologic.Diagnosis, na.rm = TRUE)
+  ) 
+```
+
+Given the range of ages at initial pathological diagnosis, we thought of defining the following categories: `[30,40)`, `[40,50)`, `[50,60)`, `[60,70)`, `[70, 80)` and `[80, 90)`. As shown in the histogram below, there are individuals for all intervals, even if some contain far more samples than others.
+
+```{r}
+ggplot(data = prot_clin_cl,
+       mapping = aes(x = Age.at.Initial.Pathologic.Diagnosis)) +
+  geom_histogram(bins =6, fill = "cornflowerblue", color = "black", alpha = 0.7) +
+  theme_minimal() +
+  labs(x = "Age Group at Initial Pathological Diagnosis",
+       y = "Count") +
+  scale_x_continuous(breaks = seq(30, 90, by = 10), limits = c(30, 90))
+```
+
+Hence, we create a new column that classifies each individual into an age group. With the aim of writing a cleaner code, before adding the new column we rename the column `Age.Ini.Diagnostic.group` as `Age`, but restore the original name once the new variable has been created.
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  rename(Age = Age.at.Initial.Pathologic.Diagnosis) |>
+  mutate(
+    Age.Ini.Diagnostic.group = case_when(
+      is.na(Age) ~ NA_character_,
+      Age < 40 ~ "[30, 40]",
+      Age >= 40 & Age < 50 ~ "[40, 50)",
+      Age >= 50 & Age < 60 ~ "[50, 60)",
+      Age >= 60 & Age < 70 ~ "[60, 70)",
+      Age >= 70 & Age < 80 ~ "[70, 80)",
+      Age >= 80 & Age < 90 ~ "[80, 90)",
+    )
+  ) |>
+  rename(Age.at.Initial.Pathologic.Diagnosis = Age)
+```
+
+With good practices purpose, we use factors to represent the categorical data.
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(Age.Ini.Diagnostic.group = factor(Age.Ini.Diagnostic.group,
+                            levels =  c("[40, 50)", 
+                                        "[50, 60)",
+                                        "[60, 70)", 
+                                        "[70, 80)", 
+                                        "[80, 90)")))
+```
+
+### 03.2.2. Targeting Triple-negative breast cancer (TNBC)
+
+Given that TNBC tends to be more agrresive than other types of breast cancer and has not approved targeted treatments, it may be interesting to identify and analyse individuals suffering from TNBC. Therefore, we created a column to specifically target TNBC, encoding individuals as TNBC-positive or TNBC-negative. Before creating the new column, we check how many individuals have missing values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` .
+
+```{r}
+prot_clin_cl |>
+  filter(is.na(ER.Status) | is.na(PR.Status) | is.na(HER2.Final.Status))
+```
+
+The only individuals that have NA values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` are the three healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the `TNBC` column.
+
+As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value "Positive", while the rest will be assigned "Negative".
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  rename(ER = ER.Status, PR = PR.Status, HER2 = HER2.Final.Status) |>
+  mutate(
+    TNBC = case_when(
+      is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_character_,
+      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "Positive",
+      TRUE ~ "Negative" # All other cases
+    )
+  )
+
+```
+
+### 03.2.3. ER/PR/HER2 status
+
+TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negative. However, it might be interesting to study other combinations as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`. We encoded them as:
+
+-   0 : TNBC ER
+
+-   1: HER2 ER
+
+-   2 : PR
+
+-   3 : ER
+
+-   4 : ER/PR
+
+-   5 : ER/HER2
+
+-    6 : PR/HER2
+
+-    7 : ER/PR/HER2
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(
+    ER_PR_HER2 = case_when(
+      is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_character_,
+      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "0", #"TNBC",
+      ER == "Negative" & PR == "Negative" & HER2 == "Positive" ~ "1", # "HER2",
+      ER == "Negative" & PR == "Positive" & HER2 == "Negative" ~ "2", # "PR",
+      ER == "Positive" & PR == "Negative" & HER2 == "Negative" ~ "3", #"ER",
+      ER == "Positive" & PR == "Positive" & HER2 == "Negative" ~ "4", # "ER/PR",
+      ER == "Positive" & PR == "Negative" & HER2 == "Positive" ~ "5", # "ER/HER2",
+      ER == "Negative" & PR == "Positive" & HER2 == "Positive" ~ "6", #"PR/HER2",
+      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "7" #"ER/PR/HER2"
+    )
+  )
+```
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(ER_PR_HER2 = factor(ER_PR_HER2,
+                            levels =  c("0", 
+                                        "1",
+                                        "2", 
+                                        "3", 
+                                        "4",
+                                        "5",
+                                        "6",
+                                        "7")))
+```
+
+### 03.2.4. Simplify AJCC stages
+
+Our data has two columns regarding AJCC, `AJCC.Stage` and `Converted.Stage`, with the latter referring to the translation of information from one edition of the AJCC staging system to another. In order to simplify further analysis and gather all data regarding AJCC into just one column, we will simplify the AJCC stages to I, II, III, and IV. For example, "Stage I", "Stage IA" and "Stage IB" will all be considered "Stage I".
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(
+    AJCC.Simp = case_when(
+      is.na(AJCC.Stage)  ~ NA_character_,
+      str_detect(AJCC.Stage, "^Stage IV") ~ "Stage IV",
+      str_detect(AJCC.Stage, "^Stage III") ~ "Stage III",
+      str_detect(AJCC.Stage, "^Stage II") ~ "Stage II",
+      str_detect(AJCC.Stage, "^Stage I") ~ "Stage I"
+    )
+  )
+```
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(AJCC.Simp = factor(AJCC.Simp,
+                            levels =  c("Stage IV", 
+                                        "Stage III",
+                                        "Stage II", 
+                                        "Stage I")))
+```
+
+## 03.3. Relocate columns
+
+Before proceeding further, we relocated the new columns before the proteomic columns.
+
+```{r}
+
+prot_clin_cl <- prot_clin_cl |> 
+  relocate(Age.Ini.Diagnostic.group , .after = Age.at.Initial.Pathologic.Diagnosis) |>
+  relocate(TNBC, .after = HER2) |>
+  relocate(ER_PR_HER2, .after = TNBC) |>
+  relocate(AJCC.Simp, .after = Converted.Stage)
+```
+
+## 03.3. Drop redundant columns
+
+Since we have created `AJCC.Simp` , there is no need for the `AJCC.Stage` and `Converted.Stage` columns, as they contain redundant information. Thus, we drop them.
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  select(-AJCC.Stage,
+         -Converted.Stage)
+```
+
+## 03.5. Save the new data in a .tsv file
+
+```{r}
+prot_clin_cl |> 
+  write_tsv(file = "../data/03_dat_aug.tsv")
+```
