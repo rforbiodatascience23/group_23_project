@@ -121,9 +121,9 @@ TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negat
 
 -   5 : ER/HER2
 
--    6 : PR/HER2
+-   6 : PR/HER2
 
--    7 : ER/PR/HER2
+-   7 : ER/PR/HER2
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
