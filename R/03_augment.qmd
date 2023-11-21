@@ -80,6 +80,36 @@ prot_clin_cl <- prot_clin_cl |>
                                         "[80, 90)")))
 ```
 
+```{r}
+#According to the WHO, most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
+
+#[30, 45) Pre-menopausal 
+#[45, 55) Menopausal
+#[55, 90) Post-menopausal
+```
+
+```{r}
+prot_clin_cl <- prot_clin_cl %>% 
+  rename(Age = Age.at.Initial.Pathologic.Diagnosis) %>% 
+  mutate(
+    Age.Menopausal.group = case_when(
+      is.na(Age) ~"NA_character_",
+      Age >= 30 & Age < 45 ~ "[30, 45)",
+      Age >= 45 & Age < 55 ~ "[45, 55)",
+      Age >= 55 & Age < 90 ~ "[55, 90)"
+    )
+  ) %>% 
+  rename(Age.at.Initial.Pathologic.Diagnosis = Age)
+```
+
+```{r}
+prot_clin_cl <- prot_clin_cl %>% 
+  mutate(Age.Menopausal.group =  factor(Age.Menopausal.group,
+                                        levels = c("[30, 45)",
+                                                   "[45, 55)",
+                                                   "[55, 90)")))
+```
+
 ### 03.2.2. Targeting Triple-negative breast cancer (TNBC)
 
 Given that TNBC tends to be more agrresive than other types of breast cancer and has not approved targeted treatments, it may be interesting to identify and analyse individuals suffering from TNBC. Therefore, we created a column to specifically target TNBC, encoding individuals as TNBC-positive or TNBC-negative. Before creating the new column, we check how many individuals have missing values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` .
