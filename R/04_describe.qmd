@@ -34,7 +34,7 @@ As a remark before starting this analysis and as we mentioned in the cleaning, w
 dim(prot_clin_cl)
 ```
 
-The final data set contains 83 observations and 9367 variables.
+The final data set contains 83 observations and 9351 variables.
 
 ### 04.2.1. Complete TCGA ID
 
@@ -88,7 +88,46 @@ prot_clin_cl %>%
 
 This type of grouping is a variation of the previous one, in this case taking into account the risk age factors for the different types of breast cancer. Hence, we have a group for "young patients", this is women under the median age of diagnosis for breast cancer, but that are more prompt to develop a TNBC type of tumor. From 45 to 55 years-old we have the age group where breast cancer is normally diagnosed, but they are younger that the median age where menopause starts (55) so these tumors are less prompt to have the hormone receptors. Lastly, we have the group of the older patients which is from 55 up to 90 years-old, where normally women already have the menopause and hence these tumors are more prompt to have hormone receptors.
 
-**PLOTTTTT**
+We investigated, whether the increased risk of developing a TNBC tumor at a younger age can be elucidated from our data. For this reason we analyzed the prevalence of TNBC across the three menopausal age groups. To mitigate the impact of one age group's samples dominating the entire data set and being more pronounced than samples belonging to other age groups, we performed normalization before the plotting step.
+
+```{r}
+meno_age_group_members <- prot_clin_cl %>%
+  count(Age.Menopausal.group, name = "Total")
+
+meno_age_group_tnbc_positive <- prot_clin_cl %>%
+  filter(TNBC == 'Positive') %>%
+  count(Age.Menopausal.group, name = "TNBC_Positive")
+
+meno_age_group_data <- left_join(meno_age_group_members, meno_age_group_tnbc_positive, by = "Age.Menopausal.group")
+
+meno_age_group_data <- meno_age_group_data %>%
+  mutate(Proportion_TNBC_Positive = TNBC_Positive / Total)
+
+meno_age_group_data
+```
+
+```{r}
+meno_age_group_data %>%
+  filter(Age.Menopausal.group != 'NA') %>%
+  ggplot(mapping = aes(x = Age.Menopausal.group, 
+                       y = Proportion_TNBC_Positive, 
+                       fill = Age.Menopausal.group)) +
+  geom_bar(stat = "identity", color = "black", alpha = 0.7) +
+  labs(title = "Normalized Triple-Negative Breast Cancer (TNBC) Across Age Groups",
+       x = "\nMenopausal Age Group",
+       y = "Proportion",
+       fill = "Menopausal Age Group Range") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5),
+        legend.position = "bottom") +
+  scale_x_discrete(labels = c("Pre-menopausal",
+                             "Menopausal",
+                             "Post-menopausal")) +
+  scale_fill_manual(values = c("darkslategray2",
+                               "cornflowerblue",
+                               "darkslateblue"))
+
+```
 
 ### 04.2.5. ER and PR status
 
@@ -129,9 +168,9 @@ prot_clin_cl_er_pr %>%
        x = "Age Group",
        y = "Count",
        fill = "ER/PR Combination") +
-  scale_fill_manual(values = c("Negative.Negative" = "cornflowerblue", 
-                               "Positive.Negative" = "deeppink3", 
-                               "Positive.Positive" = "darkgoldenrod2")) +
+  scale_fill_manual(values = c("cornflowerblue", 
+                               "deeppink3", 
+                               "darkgoldenrod2")) +
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = "bottom")
@@ -355,7 +394,7 @@ Both in the youngest and oldest age groups the most common type of cancer is Bas
 
 After the analysis of all this variables we can infer that age is an important factor in the development and prognosis of the breast cancer, since most of the analysed variables have distribution determined by age.
 
-### 04.2.15. Protein expression data 
+### 04.2.15. Protein expression data
 
 The remaining columns contain protein expression data. They contain expression values for \~12.000 proteins for each sample, with missing values removed.
 
