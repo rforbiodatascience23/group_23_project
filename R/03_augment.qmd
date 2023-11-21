@@ -67,6 +67,16 @@ prot_clin_cl <- prot_clin_cl |>
   rename(Age.at.Initial.Pathologic.Diagnosis = Age)
 ```
 
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(Age.Ini.Diagnostic.group = factor(Age.Ini.Diagnostic.group,
+                            levels =  c("[40, 50)", 
+                                        "[50, 60)",
+                                        "[60, 70)", 
+                                        "[70, 80)", 
+                                        "[80, 90)")))
+```
+
 ### 03.2.2. Targeting Triple-negative breast cancer (TNBC)
 
 Triple-negative breast cancer (TNBC) refers to cancers that lack expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). It may be interesting to identify the individuals suffering from TNBC because this type of breast cancer tends to be more aggressive than others and, unlike other breast cancer subtypes, there are no approved targeted treatments available. For instance, TNBC are not responsive to hormonal therapy. Thus, treatments may include chemotherapy. Furthermore, even if TNBC tumor cells are sensitive to chemotherapy, early relapse and visceral metastasis are common in this type of breast cancer.
@@ -126,6 +136,19 @@ prot_clin_cl <- prot_clin_cl |>
   )
 ```
 
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(ER_PR_HER2 = factor(ER_PR_HER2,
+                            levels =  c("0", 
+                                        "1",
+                                        "2", 
+                                        "3", 
+                                        "4",
+                                        "5",
+                                        "6",
+                                        "7")))
+```
+
 ### 03.2.4. Simplify AJCC stages
 
 The American Joint Committee on Cancer (AJCC) for breast cancer is a staging system for classifying the extent of a cancer based on the size of the tumor (T), lymph node involvement (N), and the presence or absence of metastasis (M).
@@ -143,6 +166,15 @@ prot_clin_cl <- prot_clin_cl |>
       str_detect(AJCC.Stage, "^Stage I") ~ "Stage I"
     )
   )
+```
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  mutate(AJCC.Simp = factor(AJCC.Simp,
+                            levels =  c("Stage IV", 
+                                        "Stage III",
+                                        "Stage II", 
+                                        "Stage I")))
 ```
 
 ## 03.3. Drop redundant columns
