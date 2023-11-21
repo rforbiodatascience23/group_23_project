@@ -72,7 +72,8 @@ With good practices purpose, we use factors to represent the categorical data.
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
   mutate(Age.Ini.Diagnostic.group = factor(Age.Ini.Diagnostic.group,
-                            levels =  c("[40, 50)", 
+                            levels =  c("[30, 40)",
+                                        "[40, 50)", 
                                         "[50, 60)",
                                         "[60, 70)", 
                                         "[70, 80)", 
