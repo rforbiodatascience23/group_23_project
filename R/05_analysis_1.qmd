@@ -6,3 +6,231 @@ format:
     embed-resources: true
 editor: visual
 ---
+
+# 05. Analysis
+
+```{r}
+#| eval: true 
+#| message: false
+library("tidyverse")
+library("broom")
+library("ggrepel")
+```
+
+```{r}
+data <- read.delim("../data/03_dat_aug.tsv") |>
+  as_tibble()
+```
+
+## 05.1. All the Proteins all the Models
+
+Explanation about why we want to do the analysis with the triple negative thingy
+
+Since we are only going to use the protein expression information we will select only the data corresponding to those columns for further analysis.
+
+```{r}
+prot_data <- data |>
+  select(matches("^NP"),
+         matches("^XP"),
+         matches("^YP"),
+         ER_PR_HER2) |>
+  mutate(ER_PR_HER2 = case_when(ER_PR_HER2 == 0 ~ 1,
+                                ER_PR_HER2 != 0 ~ 0)) |>
+  relocate(TNBC = ER_PR_HER2)
+```
+
+```{r}
+prot_data_long <- prot_data |>
+  pivot_longer(
+    cols = colnames(prot_data)[-1],
+    names_to = "Protein",
+    values_to = "log2_iTRAQ"
+  )
+
+head(prot_data_long)
+```
+
+```{r}
+prot_data_long_nested <- prot_data_long |> 
+  group_by(Protein) |> 
+  nest() |>
+  ungroup()
+```
+
+```{r}
+prot_data_long_nested <- prot_data_long_nested |>
+  group_by(Protein)
+prot_data_long_nested
+```
+
+```{r}
+prot_data_long_nested <- prot_data_long_nested |>
+  group_by(Protein) |>
+  mutate(model_object = map(.x = data,
+                            .f = ~lm(formula = log2_iTRAQ ~ TNBC,
+                                     data = .x)))
+```
+
+```{r}
+prot_data_long_nested |>
+  
+  # Here, you should replace "g2E09" with whatever was YOUR favourite gene!
+  filter(Protein == "NP_958782") |> 
+  
+  # Pull() on tibbles: This pulls out the model_object variable.
+  #   Note! This is a list, because we nested!
+  pull(model_object) |> 
+  
+  # Pluck() on lists: From the list we got from the last step,
+  #   we "pluck" the first element
+  pluck(1) |>
+  
+  # The result of pluck, is a model object,
+  #   upon which we can call the tidy function
+  tidy(conf.int = TRUE,
+       conf.level = 0.95)
+```
+
+```{r}
+prot_data_long_nested <- prot_data_long_nested |>
+  mutate(model_object_tidy = map(.x = model_object,
+                                 .f = ~tidy(.x, conf.int = TRUE, conf.level = 0.95)))
+```
+
+```{r}
+prot_estimates <- prot_data_long_nested |>
+  unnest(model_object_tidy)
+
+prot_estimates
+```
+
+```{r}
+prot_estimates <- prot_estimates |>
+  filter(term == "TNBC" ) |>
+  select(Protein, p.value, estimate, conf.low, conf.high) |>
+  ungroup()
+```
+
+```{r}
+prot_estimates <- prot_estimates |>
+  mutate(q.value = p.adjust(p.value)) |>
+  mutate(is_significant = case_when(q.value <= 0.05 ~ 'yes',
+                                    q.value > 0.05 ~ 'no'))
+```
+
+```{r}
+prot_estimates |>
+  group_by(is_significant) |>
+  summarise(number = n())
+```
+
+```{r}
+prot_estimates |>
+  filter(is_significant == 'yes') |>
+  mutate(Protein = fct_reorder(Protein, 
+                               estimate)) |>
+  ggplot(aes(x = estimate, 
+             y = Protein)) +
+  geom_errorbarh(aes(xmin = conf.low, 
+                     xmax = conf.high)) +
+  geom_vline(xintercept = 0) +
+  geom_point() +
+  labs(title = "Proteins associated with TNBC cancer" ,
+       
+       x = "Estimates (95%CIs)", 
+       y = "") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 10))
+```
+
+```{r}
+prot_estimates <- prot_estimates |>
+  mutate(sign = case_when(is_significant == "yes" ~ as.character(Protein),
+                          is_significant == "no" ~ ""))
+```
+
+```{r}
+prot_estimates |>
+  ggplot(aes(x = estimate,
+             y = -log10(p.value),
+             color = is_significant)) +
+  geom_point(alpha = 0.4) +
+  geom_text_repel(aes(label = sign),
+                  max.overlaps = Inf,
+                  size = 2,
+                  box.padding = 0.2) +
+  geom_hline(yintercept = 0) +
+  labs(title = "Proteins Associated with TNBC",
+       subtitle = "Proteins highlighted in turquoise were significant after multiple test correction",
+       caption = "Data from DOI: 10.1002/gcc.20820",
+       x = "Estimates", 
+       y = "-log10(p)") +
+  theme_minimal() +
+  theme(legend.position = "none",
+        plot.title = element_text(hjust = 1),
+        plot.subtitle = element_text(hjust = 1)) 
+```
+
+Find overexpressed and underexoressed proteins;
+
+```{r}
+prot_estimates |>
+  filter(is_significant == 'yes') |>
+  mutate(expression = case_when(estimate <= 0 ~ 'underexpressed',
+                                    q.value > 0 ~ 'overexpressed')) |>
+  group_by(expression) |>
+  summarise(number = n())
+```
+
+```{r}
+prot_estimates |>
+  filter(is_significant == 'yes') |>
+  filter(estimate <= 0) |>
+  nrow()
+```
+
+```{r}
+prot_estimates |>
+  filter(is_significant == 'yes') |>
+  filter(estimate > 0) |>
+  nrow()
+```
+
+```{r}
+library("clusterProfiler")
+library("org.Hs.eg.db")
+```
+
+Modify
+
+```{r}
+prot_list <- prot_estimates |>
+  filter(is_significant == 'yes') |>
+  pull(Protein)
+gsea_result <- gseGO(geneList = prot_list, OrgDb = org.Hs.eg.db, ont = "BP", nPerm = 1000, pvalueCutoff = 0.05, keyType = "REFSEQ")
+```
+
+```{r}
+## Fetch REFSEQ to ENTREZID conversion table
+library(MSnID)
+conv_tbl <- fetch_conversion_table(organism_name = "Homo sapiens", 
+                                   from = "REFSEQ", to = "ENTREZID")
+```
+
+```{r}
+res <- res %>% 
+  mutate(REFSEQ = sub("\\.\\d+", "", rownames(.))) %>% 
+  left_join(conv_tbl, by = "REFSEQ")
+```
+
+```{r}
+geneList <- res %>%
+  filter(!is.na(ENTREZID), !is.na(logFC)) %>% 
+  mutate(ranking_metric = -log10(P.Value)*sign(logFC)) %>% 
+  group_by(ENTREZID) %>% 
+  summarise(ranking_metric = mean(ranking_metric, na.rm = TRUE)) %>% 
+  arrange(-ranking_metric) %>% # sort descending (important!)
+  tibble::deframe() # convert to named vector
+head(geneList)
+tail(geneList)
+```

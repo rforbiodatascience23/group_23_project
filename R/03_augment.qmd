@@ -12,14 +12,16 @@ editor: visual
 ```{r}
 #| eval: true 
 #| message: false
-library(tidyverse)
+library("tidyverse")
 ```
 
 ## 03.1. Load data from .tsv files
 
 ```{r}
-prot_clin_cl <- read.delim("../data/02_dat_clean.tsv")
-gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
+prot_clin_cl <- read.delim("../data/02_dat_clean.tsv") |>
+  as_tibble()
+gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv") |>
+  as_tibble()
 ```
 
 ## 03.2. Data augmentation
@@ -56,7 +58,7 @@ prot_clin_cl <- prot_clin_cl |>
   mutate(
     Age.Ini.Diagnostic.group = case_when(
       is.na(Age) ~ NA_character_,
-      Age < 40 ~ "[30, 40]",
+      Age < 40 ~ "[30, 40)",
       Age >= 40 & Age < 50 ~ "[40, 50)",
       Age >= 50 & Age < 60 ~ "[50, 60)",
       Age >= 60 & Age < 70 ~ "[60, 70)",
@@ -131,7 +133,7 @@ prot_clin_cl <- prot_clin_cl |>
       ER == "Positive" & PR == "Positive" & HER2 == "Negative" ~ "4", # "ER/PR",
       ER == "Positive" & PR == "Negative" & HER2 == "Positive" ~ "5", # "ER/HER2",
       ER == "Negative" & PR == "Positive" & HER2 == "Positive" ~ "6", #"PR/HER2",
-      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "7" #"ER/PR/HER2"
+      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "7"  #"ER/PR/HER2"
     )
   )
 ```

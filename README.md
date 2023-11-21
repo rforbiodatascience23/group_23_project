@@ -12,6 +12,14 @@ More specifically for this project we will be using the following files:
 
 -   clinical_data_breast_cancer.csv: contains information related to the samples
 
-The data files are not included in the GitHub repository, as specified in the project requirements. as the data could not be retrieved automatically from any web server, if you wish to execute this project end-to-end, you must download the correspondng files inside the `/data/_raw/` directory.
+The data files are not included in the GitHub repository, as specified in the project requirements. as the data could not be retrieved automatically from any web server, if you wish to execute this project end-to-end, you must download the correspondng files inside the `/data/_raw/` directory. End-to-end execution also requires having the following packages installed:
+
+-   tidyverse
+
+-   ggrepel
+
+-   broom
+
+-   clusterProfiler(`BiocManager::install("clusterProfiler")`)
 
 The R folder contains all the scripts done for this project.
