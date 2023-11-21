@@ -114,14 +114,14 @@ prot_clin_cl <- prot_clin_cl |>
   mutate(
     ER_PR_HER2 = case_when(
       is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_character_,
-      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "TNBC",
-      ER == "Negative" & PR == "Negative" & HER2 == "Positive" ~ "HER2",
-      ER == "Negative" & PR == "Positive" & HER2 == "Negative" ~ "PR",
-      ER == "Positive" & PR == "Negative" & HER2 == "Negative" ~ "ER",
-      ER == "Positive" & PR == "Positive" & HER2 == "Negative" ~ "ER/PR",
-      ER == "Positive" & PR == "Negative" & HER2 == "Positive" ~ "ER/HER2",
-      ER == "Negative" & PR == "Positive" & HER2 == "Positive" ~ "PR/HER2",
-      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "ER/PR/HER2"
+      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "0", #"TNBC",
+      ER == "Negative" & PR == "Negative" & HER2 == "Positive" ~ "1", # "HER2",
+      ER == "Negative" & PR == "Positive" & HER2 == "Negative" ~ "2", # "PR",
+      ER == "Positive" & PR == "Negative" & HER2 == "Negative" ~ "3", #"ER",
+      ER == "Positive" & PR == "Positive" & HER2 == "Negative" ~ "4", # "ER/PR",
+      ER == "Positive" & PR == "Negative" & HER2 == "Positive" ~ "5", # "ER/HER2",
+      ER == "Negative" & PR == "Positive" & HER2 == "Positive" ~ "6", #"PR/HER2",
+      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "7" #"ER/PR/HER2"
     )
   )
 ```
