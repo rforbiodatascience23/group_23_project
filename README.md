@@ -29,11 +29,3 @@ The data files were not included in this GitHub repository, as specified in the 
 ## Executing the analysis 
 
 The R folder contains all the .qmd scripts created for this project, which break down the analysis into easy-to-follow steps. To execute the entire analysis in one go, please run `00_all.qmd`.
-
-## Contributors
-
--   Ana Pastor Mediavilla, @AnaPasMed
--   Amanda Jimenez Lobato, @AmandaJimLob99
--   Carlos de Santiago León, @CarlosSanti00
--   Laura Figueiredo Tor, @LFT18
--   Monika Karolina Borkowska, @mondaymon
