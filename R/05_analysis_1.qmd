@@ -7,193 +7,68 @@ format:
 editor: visual
 ---
 
-# 05. Analysis
+# 05. Differential expression analysis
 
 ```{r}
 #| eval: true 
 #| message: false
+#| warning: false
 library("tidyverse")
 library("broom")
 library("ggrepel")
 ```
+
+## 05.1. Introduction
+
+In the present quato document a Differential Expression Analysis of the available proteomics data is conducted. This kind of analysis allows to identify changes in the relative abundance of proteins between patients that present different conditions. In the present notebook two different conditions which were considered of interest will be studied:
+
+-   TTriple-Negative Breast Cancer (TNBC) vs. Non-TNBC
+
+-   Basal-Like vs. Non-Basal-Like
+
+This analysis is of special importance for understanding the underlying mechanisms of the disease, and it is also useful to identify proteins which can be used as bio-markers for disease diagnostics or prognosis, as the expression fo certain proteins may be associated with a special variant of the disease or a better or worse prognosis.
+
+As it was decided to test two conditions, and the code required for this analysis is fairly similar just taking into consideration the condition, it was decided to create several functions which can be accessed in the R script `99_proj_func.R`. More specifically, the functions are:
+
+-   `DEA_proteins`: takes as input the tibble with the data, and the column which is the condition to be tested (has to be called inside a `dplyr` pipeline). In this function the relevant columns for the analysis are selected and a nested data structure is created to fit a linear model for each of the proteins. The models are tidied afterwards, and the p-values are adjusted. This function calls the function `volcano_plot`, which creates a volcano plot with the results from the analysis. The output of the function is a list that includes a tibble with the results of the analysis and a volcano plot. Further description of the different steps can be found in the comments of the function.
+
+-   `volcano_plot:` creates a volcano plot with the data from the previous function. The Non Significant proteins are plotted in grey, the Upregulated in red and the Downregulated in blue.
+
+```{r}
+# Getting the functions from the code
+source("99_proj_func.R")
+```
+
+## 05.2. Load data from .tsv files
 
 ```{r}
 data <- read.delim("../data/03_dat_aug.tsv") |>
   as_tibble()
 ```
 
-## 05.1. All the Proteins all the Models
+## 05.3. Triple-Negative Breast Cancer (TNBC) vs. Non-TNBC
 
-Explanation about why we want to do the analysis with the triple negative thingy
+As it was already explained during the description of the daTa, in this data set the relative abundance of proteins in the samples is represented by means of Log2 iTRAQ ratios were used to represent the relative abundance of proteins in the samples.
 
-Since we are only going to use the protein expression information we will select only the data corresponding to those columns for further analysis.
-
-```{r}
-prot_data <- data |>
-  select(matches("^NP"),
-         matches("^XP"),
-         matches("^YP"),
-         ER_PR_HER2) |>
-  mutate(ER_PR_HER2 = case_when(ER_PR_HER2 == 0 ~ 1,
-                                ER_PR_HER2 != 0 ~ 0)) |>
-  relocate(TNBC = ER_PR_HER2)
-```
+In the context of Breast Cancer studies it is of special interest the study of Triple-Negative Breast Cancer (TNBC), which are characterized for lacking the expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). This type of cncer is usually more aggresive and additionally, there are no approved targeted treatments available, and even if they can be treated with chemotherapy, patients that suffer from this cancer are more prone to early relapse and metastasis. Therefore further research on the differences between these type of cancer and others is of special interest.
 
 ```{r}
-prot_data_long <- prot_data |>
-  pivot_longer(
-    cols = colnames(prot_data)[-1],
-    names_to = "Protein",
-    values_to = "log2_iTRAQ"
+data <- data |>
+  mutate(
+    TNBC = case_when(
+      ER_PR_HER2 == 0 ~ 1, 
+      ER_PR_HER2 != 0 ~ 0,
+    )
   )
-
-head(prot_data_long)
 ```
 
 ```{r}
-prot_data_long_nested <- prot_data_long |> 
-  group_by(Protein) |> 
-  nest() |>
-  ungroup()
+DEA_TNBC <- data |>
+  DEA_proteins(TNBC)
 ```
 
 ```{r}
-prot_data_long_nested <- prot_data_long_nested |>
-  group_by(Protein)
-prot_data_long_nested
-```
-
-```{r}
-prot_data_long_nested <- prot_data_long_nested |>
-  group_by(Protein) |>
-  mutate(model_object = map(.x = data,
-                            .f = ~lm(formula = log2_iTRAQ ~ TNBC,
-                                     data = .x)))
-```
-
-```{r}
-prot_data_long_nested |>
-  
-  # Here, you should replace "g2E09" with whatever was YOUR favourite gene!
-  filter(Protein == "NP_958782") |> 
-  
-  # Pull() on tibbles: This pulls out the model_object variable.
-  #   Note! This is a list, because we nested!
-  pull(model_object) |> 
-  
-  # Pluck() on lists: From the list we got from the last step,
-  #   we "pluck" the first element
-  pluck(1) |>
-  
-  # The result of pluck, is a model object,
-  #   upon which we can call the tidy function
-  tidy(conf.int = TRUE,
-       conf.level = 0.95)
-```
-
-```{r}
-prot_data_long_nested <- prot_data_long_nested |>
-  mutate(model_object_tidy = map(.x = model_object,
-                                 .f = ~tidy(.x, conf.int = TRUE, conf.level = 0.95)))
-```
-
-```{r}
-prot_estimates <- prot_data_long_nested |>
-  unnest(model_object_tidy)
-
-prot_estimates
-```
-
-```{r}
-prot_estimates <- prot_estimates |>
-  filter(term == "TNBC" ) |>
-  select(Protein, p.value, estimate, conf.low, conf.high) |>
-  ungroup()
-```
-
-```{r}
-prot_estimates <- prot_estimates |>
-  mutate(q.value = p.adjust(p.value)) |>
-  mutate(is_significant = case_when(q.value <= 0.05 ~ 'yes',
-                                    q.value > 0.05 ~ 'no'))
-```
-
-```{r}
-prot_estimates |>
-  group_by(is_significant) |>
-  summarise(number = n())
-```
-
-```{r}
-prot_estimates |>
-  filter(is_significant == 'yes') |>
-  mutate(Protein = fct_reorder(Protein, 
-                               estimate)) |>
-  ggplot(aes(x = estimate, 
-             y = Protein)) +
-  geom_errorbarh(aes(xmin = conf.low, 
-                     xmax = conf.high)) +
-  geom_vline(xintercept = 0) +
-  geom_point() +
-  labs(title = "Proteins associated with TNBC cancer" ,
-       
-       x = "Estimates (95%CIs)", 
-       y = "") +
-  theme_minimal() +
-  theme(plot.title = element_text(size = 10))
-```
-
-```{r}
-prot_estimates <- prot_estimates |>
-  mutate(sign = case_when(is_significant == "yes" ~ as.character(Protein),
-                          is_significant == "no" ~ ""))
-```
-
-```{r}
-prot_estimates |>
-  ggplot(aes(x = estimate,
-             y = -log10(p.value),
-             color = is_significant)) +
-  geom_point(alpha = 0.4) +
-  geom_text_repel(aes(label = sign),
-                  max.overlaps = Inf,
-                  size = 2,
-                  box.padding = 0.2) +
-  geom_hline(yintercept = 0) +
-  labs(title = "Proteins Associated with TNBC",
-       subtitle = "Proteins highlighted in turquoise were significant after multiple test correction",
-       caption = "Data from DOI: 10.1002/gcc.20820",
-       x = "Estimates", 
-       y = "-log10(p)") +
-  theme_minimal() +
-  theme(legend.position = "none",
-        plot.title = element_text(hjust = 1),
-        plot.subtitle = element_text(hjust = 1)) 
-```
-
-Find overexpressed and underexoressed proteins;
-
-```{r}
-prot_estimates |>
-  filter(is_significant == 'yes') |>
-  mutate(expression = case_when(estimate <= 0 ~ 'underexpressed',
-                                    q.value > 0 ~ 'overexpressed')) |>
-  group_by(expression) |>
-  summarise(number = n())
-```
-
-```{r}
-prot_estimates |>
-  filter(is_significant == 'yes') |>
-  filter(estimate <= 0) |>
-  nrow()
-```
-
-```{r}
-prot_estimates |>
-  filter(is_significant == 'yes') |>
-  filter(estimate > 0) |>
-  nrow()
+DEA_TNBC$volc
 ```
 
 ```{r}
@@ -204,17 +79,10 @@ library("org.Hs.eg.db")
 Modify
 
 ```{r}
-prot_list <- prot_estimates |>
-  filter(is_significant == 'yes') |>
-  pull(Protein)
-gsea_result <- gseGO(geneList = prot_list, OrgDb = org.Hs.eg.db, ont = "BP", nPerm = 1000, pvalueCutoff = 0.05, keyType = "REFSEQ")
-```
-
-```{r}
-## Fetch REFSEQ to ENTREZID conversion table
-library(MSnID)
-conv_tbl <- fetch_conversion_table(organism_name = "Homo sapiens", 
-                                   from = "REFSEQ", to = "ENTREZID")
+# prot_list <- prot_estimates |>
+#   filter(is_significant == 'yes') |>
+#   pull(Protein)
+# gsea_result <- gseGO(geneList = prot_list, OrgDb = org.Hs.eg.db, ont = "BP", nPerm = 1000, pvalueCutoff = 0.05, keyType = "REFSEQ")
 ```
 
 ```{r}
@@ -224,13 +92,15 @@ res <- res %>%
 ```
 
 ```{r}
-geneList <- res %>%
-  filter(!is.na(ENTREZID), !is.na(logFC)) %>% 
-  mutate(ranking_metric = -log10(P.Value)*sign(logFC)) %>% 
-  group_by(ENTREZID) %>% 
-  summarise(ranking_metric = mean(ranking_metric, na.rm = TRUE)) %>% 
-  arrange(-ranking_metric) %>% # sort descending (important!)
+geneList <- prot_estimates |>
+  filter(is_significant == 'yes') |>
+  group_by(Protein) |>
+  arrange(-q.value) |> # sort descending (important!)
   tibble::deframe() # convert to named vector
 head(geneList)
 tail(geneList)
 ```
+
+## 05.4. Basal-like vs. Non-Basal-like
+
+"TNBC is characterized by its unique molecular profile, aggressive behavior, distinct patterns of metastasis, and lack of targeted therapies. Although not synonymous, the majority of triple-negative breast cancers carry the **"basal-like"** molecular profile on gene expression arrays. The majority of BRCA1-associated breast cancers are triple-negative and basal-like; the extent to which the BRCA1 pathway contributes to the behavior of sporadic basal-like breast cancers is an area of active research. Epidemiologic studies illustrate a high prevalence of triple-negative breast cancers among **younger** women and those of African descent. Increasing evidence suggests that the risk factor profile differs between this subtype and the more common luminal subtypes. Although sensitive to chemotherapy, early relapse is common and a predilection for visceral metastasis, including brain metastasis, is seen."
