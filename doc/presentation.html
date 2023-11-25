@@ -415,15 +415,39 @@ Group_23
 <section id="materials-and-methods" class="slide level2">
 <h2>Materials and methods</h2>
 <h3 id="workflow">Workflow</h3>
-<p>When you click the <strong>Render</strong> button a document will be generated that includes:</p>
-<ul>
-<li class="fragment">Content authored with markdown</li>
-<li class="fragment">Output from executable code</li>
-</ul>
 </section>
 <section id="materials-and-methods-1" class="slide level2">
 <h2>Materials and methods</h2>
 <h3 id="description-of-relevant-variables">Description of relevant variables</h3>
+<ul>
+<li class="fragment"><p>Dropped variables (redundant or not relevant): Survival.Data.Form, Days.to.date.of.Death, Days.to.Date.of.Last.Contact, OS.Time, Vital.Status, Tumor..T1.Coded, Metastasis.Coded, AJCC.Stage, Converted.Stage and all the columns destined to cluster the data</p></li>
+<li class="fragment"><p>Created variables:</p>
+<ul>
+<li class="fragment"><p>Age.Ini.Diagnostic.group: intervals of 10 years starting from 30 and going up until 90.</p></li>
+<li class="fragment"><p>Age.Menopausal.group: <code>[30, 45)</code> Pre-menopausal, <code>[45, 55)</code> Menopausal, <code>[55, 90)</code> Post-menopausal.</p></li>
+<li class="fragment"><p>ER_PR_HER2: level from 0 to 7 depending on hormonal receptors (ER, PR) present an the level of HER2.</p></li>
+<li class="fragment"><p>TNBC: 0 if positive, 1 if negative</p></li>
+<li class="fragment"><p>AJCC.Simp: simplified AJCC stages (I, II, III, and IV)</p></li>
+</ul></li>
+</ul>
+</section>
+<section id="materials-and-methods-2" class="slide level2">
+<h2>Materials and methods</h2>
+<h3 id="description-of-relevant-variables-1">Description of relevant variables</h3>
+<div class="columns">
+<div class="column" style="width:60%;">
+<div class="quarto-figure quarto-figure-right">
+<figure>
+<p><img data-src="../results/ER_PR_across_age_groups.png" style="width:50.0%"></p>
+</figure>
+</div>
+<div class="quarto-figure quarto-figure-right">
+<figure>
+<p><img data-src="../results/normalized_TNBC_across_menopausal.png" style="width:50.0%"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="code" class="slide level2">
 <h2>Code</h2>
