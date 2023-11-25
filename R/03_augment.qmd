@@ -80,13 +80,13 @@ prot_clin_cl <- prot_clin_cl |>
                                         "[80, 90)")))
 ```
 
-```{r}
-#According to the WHO, most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
+According to the WHO, most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
 
-#[30, 45) Pre-menopausal 
-#[45, 55) Menopausal
-#[55, 90) Post-menopausal
-```
+`[30, 45)` Pre-menopausal
+
+`[45, 55)` Menopausal
+
+`[55, 90)` Post-menopausal
 
 ```{r}
 prot_clin_cl <- prot_clin_cl %>% 
@@ -121,7 +121,7 @@ prot_clin_cl |>
 
 The only individuals that have NA values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` are the three healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the `TNBC` column.
 
-As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value "Positive", while the rest will be assigned "Negative".
+As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value 0, while the rest will be assigned 1.
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
@@ -129,8 +129,8 @@ prot_clin_cl <- prot_clin_cl |>
   mutate(
     TNBC = case_when(
       is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_character_,
-      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "Positive",
-      TRUE ~ "Negative" # All other cases
+      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "0",
+      TRUE ~ "1" # All other cases
     )
   )
 
