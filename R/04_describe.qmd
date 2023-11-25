@@ -133,6 +133,12 @@ meno_age_group_data %>%
 
 ```
 
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/normalized_TNBC_across_menopausal.png", plot = last_plot(), device = "png")
+```
+
 ### 04.2.5. ER and PR status
 
 These two columns make reference to the presence or absence of receptors that attach to the hormones estrogen and progesterone, and hence the tumorous cells need these hormones to grow.
@@ -178,6 +184,12 @@ prot_clin_cl_er_pr %>%
   theme_minimal() +
   theme(plot.title = element_text(hjust = 0.5),
         legend.position = "bottom")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/ER_PR_across_age_groups.png", plot = last_plot(), device = "png")
 ```
 
 ### 04.2.6. HER2 status
