@@ -38,7 +38,7 @@ The following R packages are used for this project:
 -   `patchwork`
 -   `ggrepel`
 
-If you are missing any in your RStudio environment, just install the necessary package by running the command: `install.packages("Package name")`
+If you are missing any in your RStudio environment, just install the necessary package by running the command: `install.packages("Package name")`.
 
 ## Executing the analysis
 
