@@ -12,7 +12,7 @@ editor: visual
 ```{r}
 #| eval: true 
 #| message: false
-library(tidyverse)
+library("tidyverse")
 ```
 
 ## 02.1. Load data from .tsv files
@@ -37,11 +37,11 @@ sum(is.na(prot_cli))
 mean(is.na(prot_cli))
 ```
 
-We can observe that there are around 110000 missing values in our data set, probably most of them coming from the protein expression columns. These missing values correspond to a bit more of a 10% of all of the values to our dataset, so therefore a cleaning of those NAs values is required. In addition, some NA values are also found in the clinical metadata information, as we saw in the `01_load.qmd` script.
+We can observe that there are around 110 000 missing values in our data set, probably most of them coming from the protein expression columns. These missing values correspond to a bit more than a 10% of all of the values in our dataset, therefore handling these NA values is required. In addition, some NAs can also be found in the clinical metadata information, as we saw in the `01_load.qmd` script.
 
 ### 02.2.1. Clinical information
 
-Our dataset consists of proteome profiling data and clinical records from breast cancer patients. In addition, 3 more samples of healthy individuals were added to the proteome profiling data. As explained before, those three samples corresponding to healthy patients have no clinical information. Therefore, these 3 samples have NAs for all the columns corresponding to the clinical records information.
+Our dataset consists of proteome profiling data and clinical records from breast cancer patients. In addition, 3 samples of healthy individuals were added to the proteome profiling data. As explained before, those 3 samples, corresponding to healthy patients, have no clinical information. Therefore, NAs can be seen for these 3 samples across all the columns corresponding to the clinical records information.
 
 ```{r}
 # Check the 3 rows with all the information as NA
@@ -52,7 +52,7 @@ prot_cli |>
   filter(is.na(Gender))
 ```
 
-Regarding the rest of the samples, it can be checked if there are any missing values, and if there is a column for which the number of missing values is high. As we are aware these 3 healthy-individual samples out of the 83 are full of NAs (3/83=0.03614458), we should check for columns with a `mean.NA` value higher of that.
+Regarding the rest of the samples, it can be checked whether there are any missing values, and if there is a column for which the number of missing values is high. As we are aware, the aforementioned 3 healthy-individual's samples out of the 83, are full of NAs (3/83=0.03614458), thus we should check for columns with a `mean.NA` value higher than that number.
 
 ```{r}
 prot_cli |>
@@ -64,9 +64,9 @@ prot_cli |>
   select(where(~. > 0.037))
 ```
 
-We can observe that there is only 1 column (`Days.to.date.of.Death`) which seems to have more than 91% of their records as NA values. This column is referent to the number of days since the patient died after the last contact registered date (`Days.to.Date.of.Last.Contact`). Probably, most of the patients did not die during the time the experiment was running, which is why most of the rows have 'NA' in this column. As we are not interested in the time-series records of the patients for our analysis, the most convenient approach is to drop the columns related to it (`Survival.Data.Form`, `Days.to.Date.of.Last.Contact`, `Days.to.date.of.Death`, and `OS.time`), so we can get rid of the problematic 'NA' column. Additionally, we can drop `Vital.Status` as it has the same information as `OS.event` but 1-hot encoded.
+We can observe that there is only 1 column (`Days.to.date.of.Death`), which seems to have more than 91% of their records as NA values. This column refers to the number of days since the patient died after the date of last contact (`Days.to.Date.of.Last.Contact`). Probably, most of the patients did not die during the time the experiment was running, which is why most of the rows have 'NA' in this column. As we are not interested in the time-series records of the patients in our analysis, the most convenient approach is to drop the columns related to this (`Survival.Data.Form`, `Days.to.Date.of.Last.Contact`, `Days.to.date.of.Death`, and `OS.time`), effectively getting rid of the problematic 'NA' column. Additionally, we can drop `Vital.Status` as it contains the same information as `OS.event` but 1-hot encoded.
 
-In addition, we have removed additional columns that we have concluded are redundant with other columns or because they are not relevant for further analysis.
+Moreover, we have removed additional columns that we have concluded to be redundant, either by being able to infer the information they contain from other columns, or because they are not relevant for the analysis we want to conduct.
 
 ```{r}
 clean_prot_cli <- prot_cli |>
@@ -81,7 +81,7 @@ clean_prot_cli <- prot_cli |>
   rename(Vital.State = OS.event)
 ```
 
-Finally, we only have to deal with the 3 healthy samples that do not have clinical records as they do not have breast cancer. For maintaining these 3 records in case of future analysis, we have decided to keep those NAs in the clinical metadata columns, as we feel that adding 'invented' values could be not the best approach and could corrupt some of the future analysis (for example, in a clustering analysis).
+Finally, we only have to deal with the 3 healthy samples that do not possess clinical records, due to being devoid of breast cancer. For maintaining these records in case they are needed for future analysis, we have decided to keep the NAs in the clinical metadata columns, as we feel that adding 'artificial' values would not be the best approach and could potentially corrupt future analysis (for example, during clustering).
 
 ```{r}
 clean_prot_cli |>
@@ -92,7 +92,7 @@ clean_prot_cli |>
 
 ### 02.2.2. Proteomics data
 
-First, we want to get a glimpse of how many genes (proteins) are there for which there are not a single missing value?
+First, we want to get a glimpse of how many genes (proteins) are there in the data set, for which there is not a single missing value present.
 
 ```{r}
 # Mean of NAs per column
@@ -108,9 +108,9 @@ NAs_prots |>
   ncol()
 ```
 
-There is a total of 7994 proteins (out of the 12553 protein-expression-related columns) for which there are no missing values. This means that all samples have around 64% of the protein-expression data complete.
+There is a total of 7 994 proteins (out of the 12 553 protein-expression-related columns) for which there are no missing values recorded. This means that all samples have around 64% of the protein-expression data complete.
 
-It is also interesting to check if there is any gene for which there is a large amount of samples with missing values. Therefore we can also take a look at missing values per row, and select the rows for which there are more than 25% of missing values.
+It is also interesting to check whether there is any gene present, for which there is a large amount of samples with missing values. Therefore, we can also take a look at missing values per row, and select the rows for which there are more than 25% of missing values.
 
 ```{r}
 NAs_prots |>
@@ -126,7 +126,7 @@ NAs_prots |>
   ncol()
 ```
 
-We proceed to drop the columns corresponding to protein expression where the number of missing values is greater than 10% (which represents around 25.6% of the total protein-expression data). After this change, we have reduced the original data frame from 12582 columns to 9363 columns.
+We proceed to drop the columns corresponding to protein expression where the number of missing values is greater than 10% (which represents around 25.6% of the total protein-expression data). After this change, we have reduced the original data frame from 12 582 columns to 9 363 columns.
 
 ```{r}
 clean_prot_cli <- clean_prot_cli |>
@@ -160,9 +160,9 @@ clean_prot_cli |>
   nrow()
 ```
 
-It seems that there are only 3 samples that have more than 5% of NAs, but none of the samples have more than 10% of NAs. This suggests that we can continue using all of the samples, as there is no patient with a bad quality proteome profile.
+It seems that there are only 3 samples that have more than 5% of NAs, but none of the samples have more than 10% of NAs. This suggests that we can continue using all of the samples, as there are no patients with a proteome profile of poor quality.
 
-Regarding the columns that contain missing values, but in a percentage smaller than 10%, it was decided that those missing values would be imputed using the mean. It could also be the median, or using Random Forest imputation, which is one of the recommended according to [Jin et al., 2021](https://www.nature.com/articles/s41598-021-81279-4#citeas).
+Regarding the columns that contain missing values, but in a percentage smaller than 10%, it was decided that those missing values would be imputed using the mean. It could also be the median, or using Random Forest imputation, which is one of the recommended methods according to [Jin et al., 2021](https://www.nature.com/articles/s41598-021-81279-4#citeas).
 
 ```{r}
 clean_prot_cli <- clean_prot_cli |>
@@ -176,7 +176,7 @@ clean_prot_cli <- clean_prot_cli |>
 
 ### 02.2.3. Final clean data set
 
-Now let's check if we have successfully removed all of the 'NA's data and achieved a clean and tidy data set. We have to keep in mind that our dataset is not 'fully' clean, as we have kept the 'NA's from the clinical metadata columns of the healthy individuals, which should be equal to 39 NAs (3 healthy samples multiplied by 13 columns related with clinical metadata information).
+Now let's check if we have successfully removed all of the NAs data and achieved a clean and tidy dataset. We have to keep in mind that our dataset is not 'fully' clean, as we have kept the NAs from the clinical metadata columns of the healthy individuals, which should be equal to 39 NAs (3 healthy samples multiplied by 13 columns related with clinical metadata information).
 
 ```{r}
 # How many values in total are missing

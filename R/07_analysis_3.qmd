@@ -1,0 +1,228 @@
+---
+title: "05_analysis_1"
+author: "Group_23"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+# 07. Differential expression analysis
+
+```{r}
+#| eval: true 
+#| message: false
+#| warning: false
+library("tidyverse")
+library("broom")
+library("ggrepel")
+library("rentrez")
+```
+
+## 07.1. Introduction
+
+In the present quarto document a Differential Expression Analysis of the available proteomics data is conducted. This kind of analysis allows to identify changes in the relative abundance of proteins between patients that present different conditions. In the present notebook two different conditions which were considered of interest will be studied:
+
+-   Triple-Negative Breast Cancer (TNBC) vs. Non-TNBC
+
+-   Basal-Like vs. Non-Basal-Like
+
+This analysis is of special importance for understanding the underlying mechanisms of the disease, and it is also useful to identify proteins which can be used as bio-markers for disease diagnostics or prognosis, as the expression fo certain proteins may be associated with a special variant of the disease or a better or worse prognosis.
+
+As it was decided to test two conditions, and the code required for this analysis is fairly similar just taking into consideration the condition, it was decided to create several functions which can be accessed in the R script `99_proj_func.R`. More specifically, the functions are:
+
+-   `DEA_proteins`: takes as input the tibble with the data, and the column which is the condition to be tested (has to be called inside a `dplyr` pipeline). In this function the relevant columns for the analysis are selected and a nested data structure is created to fit a linear model for each of the proteins. The models are tidied afterwards, and the p-values are adjusted. This function calls the function `volcano_plot`, which creates a volcano plot with the results from the analysis. The output of the function is a list that includes a tibble with the results of the analysis and a volcano plot. Further description of the different steps can be found in the comments of the function.
+
+-   `volcano_plot:` creates a volcano plot with the data from the previous function. The Non Significant proteins are plotted in grey, the Upregulated in red and the Downregulated in blue.
+
+```{r}
+# Getting the functions from the code
+source("99_proj_func.R")
+```
+
+## 07.2. Load data from .tsv files
+
+```{r}
+data <- read.delim("../data/03_dat_aug.tsv") |>
+  as_tibble()
+```
+
+## 07.3. Triple-Negative Breast Cancer (TNBC) vs. Non-TNBC
+
+As it was already explained during the description of the data, in this data set the relative abundance of proteins in the samples is represented by means of Log2 iTRAQ ratios were used to represent the relative abundance of proteins in the samples.
+
+In the context of Breast Cancer studies it is of special interest the study of Triple-Negative Breast Cancer (TNBC), which are characterized for lacking the expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). This type of cancer is usually more aggressive and additionally, there are no approved targeted treatments available, and even if they can be treated with chemotherapy, patients that suffer from this cancer are more prone to early relapse and metastasis. Therefore further research on the differences between these type of cancer and others is of special interest.
+
+To proceed with the analysis the function DEA_proteins will be used, in this case using the variable TNBC as the condition to be tested.
+
+```{r}
+data <- data |>
+  mutate(
+    TNBC = case_when(
+      ER_PR_HER2 == 0 ~ 1, 
+      ER_PR_HER2 != 0 ~ 0,
+    )
+  )
+```
+
+```{r}
+DEA_TNBC <- data |>
+  DEA_proteins(TNBC)
+
+```
+
+From the element estimates of the list, a tibble is obtained. It is possible to check how many proteins are differentially expressed (significant after multiple test correlation):
+
+```{r}
+DEA_TNBC |>
+  pluck("estimates") |>
+  count(dif_exp)
+```
+
+There are 202 proteins differentially expressed when testing TNBC vs. Non-TNBC. 114 proteins with a higher expression in patients with TNBC than in patients without TNBC, and 88 with a lower expression in patients with TNBC than in patients without TNBC.
+
+We can visualize the volcano plot corresponding to this test:
+
+```{r}
+DEA_TNBC |>
+  pluck("estimates")
+```
+
+```{r}
+DEA_TNBC |>
+  pluck("plt_volcano")
+```
+
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/TNBC_vs_Non_TNBCL.png", plot = last_plot(), device = "png")
+```
+
+Now, get a list of all the differentially expressed proteins (Up or Down) for further comparison.
+
+```{r}
+TNBC_dif_exp <- DEA_TNBC |>
+  pluck("estimates") |>
+  filter(dif_exp == "Up" | dif_exp == "Down") |>
+  select(Protein,
+         dif_exp)
+TNBC_dif_exp
+```
+
+## 07.4. Basal-like vs. Non-Basal-like
+
+The PAM50 RNA-based gene signature is used as a gold-standard to identify different breast cancer subtypes, it is based ib the expression levels of five specific mRNAs. One of the categories in this classification is the basal-like subtype, one of the most aggressive subtypes. Basal-like breast cancer is similar to TNBC, but they are nor biologically-synonymous. As stated above, TNBC is characterized by the lack of ER, PR and HER2, on the other hand basal-like breast cancers are defined by a specific gene expression signature, more specifically strong expression of basal markers as cytokeratins 5,6 and 17. Nevertheless, basal-like breast cancer cells usully lack ER, PR and HER2, but present some protein changes that not al TNBC cells present. Overall both types of cancers are really aggressive and are usually assocaited with poor clinical outcomes. [DOI](https://doi.org/10.1038/s41467-022-28524-0)
+
+```{r}
+data <- data |>
+  mutate(
+    BASAL = case_when(
+      PAM50.mRNA == "Basal-like" ~ 1, 
+      PAM50.mRNA != "Basal-like" ~ 0,
+    )
+  )  
+```
+
+To proceed with the analysis the function DEA_proteins will be used, in this case using the variable BASAL as the condition to be tested.
+
+```{r}
+DEA_basal <- data |>
+  DEA_proteins(BASAL)
+```
+
+```{r}
+DEA_basal |>
+  pluck("estimates") |>
+  count(dif_exp)
+```
+
+There are 199 proteins differentially expressed when testing TNBC vs. Non-TNBC. 115 proteins with a higher expression in patients that have basal-like subtype than in patients that have not basal-like subtype, and 84 with a lower expression in patients that have basal-like cancer subtype than in patients that have not basal-like subtype.
+
+We can visualize the volcano plot corresponding to this test:
+
+```{r}
+DEA_basal |>
+  pluck("plt_volcano") 
+```
+
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/BASAL_vs_Non_BASAL.png", plot = last_plot(), device = "png")
+```
+
+Now, get a list of all the differentially expressed proteins (Up or Down) for further comparison.
+
+```{r}
+BASAL_dif_exp <- DEA_basal |>
+  pluck("estimates") |> 
+  filter(dif_exp == "Up" | dif_exp == "Down") |>
+  select(Protein,
+         dif_exp)
+```
+
+## 07.5. Comparing differentially expressed proteins in both tests
+
+Given the similarities that these conditions share, it is interesting to take a look at the proteins which are differentially expressed in both conditions. Therefore, an inner join considering both columns was performed. The result should show a list of proteins and their differentially expression status (Up or Down), which are differentially expressed in both tests (Basal-like vs. Non-basal-like and TNBC vs. Non-TNBC)
+
+Compare list of genes for the comparisons that have been made:
+
+```{r}
+BASAL_dif_exp |>
+  inner_join(TNBC_dif_exp, by = c("Protein","dif_exp")) |>
+  count(dif_exp)
+```
+
+Therefore there are a total of 81 proteins which are over-expressed in patients with Basal-like breast cancers and in patients with TNBC, while there are 112 proteins which are under-expressed in patients.
+
+It can also be checked which proteins are differentially expressed the Basal-like vs. Non-basal-like comparison but not in the TNBC vs. Non-TNBC:
+
+```{r}
+BASAL_dif_exp |>
+  anti_join(TNBC_dif_exp, by = c("Protein","dif_exp")) 
+```
+
+And viceversa:
+
+```{r}
+TNBC_dif_exp |>
+  anti_join(BASAL_dif_exp, by = c("Protein","dif_exp")) 
+```
+
+The package `rentrez` allows to retrieve data from NCBI's databases. In this case, first the RefSeq IDs are retrieved, and the the function `entrez_fetch` is used to retrieve information corresponding tothose IDs. This information retrieved is parsed to get only the information corresponding to the brief description of the protein, regex is used for this purpose. This allows to get an overview of the role of these proteins.
+
+```{r}
+# For proteins in basal that are not in TNBC
+basal_not_tnbc <- BASAL_dif_exp |>
+  anti_join(TNBC_dif_exp, by = c("Protein", "dif_exp")) |>
+  select(Protein) |>
+  mutate(Info = map(Protein, ~ sub("^>(.*?)\\[.*", "\\1", entrez_fetch(db = "protein", id = .x, rettype = "fasta"))))
+
+
+# For proteins in TNBC that are not in basal
+tnbc_not_basal <- TNBC_dif_exp |>
+  anti_join(BASAL_dif_exp, by = c("Protein","dif_exp")) |>
+  select(Protein) %>%
+  mutate(Info = map(Protein, ~ sub("^>(.*?)\\[.*", "\\1", entrez_fetch(db = "protein", id = .x, rettype = "fasta"))))
+```
+
+```{r}
+basal_not_tnbc |>
+  select(Info) |>
+  pull()
+```
+
+```{r}
+tnbc_not_basal |>
+  select(Info) |>
+  pull()
+```
+
+## 07.6. Conclusion
+
+The study of differential expression of proteins is crucial for several reasons, among them that it allows to identify which signature proteins are associated with each subtype of cancer, which could shed light into the molecular differences which lead cancer development and progressions. It could potentially be useful regarding the different therapies that can be developed fr cancer treatment, as some of these proteins could potentially be therapeutic targets or new biomarkers.
+
+In the present analysis it has been proven of there is a difference in the protein expression profile of patients with TNBC and patients that do not have TNBC. Furthermore, patients with basal-like cancer and patients with non-basal-like cancers also present a different protein expression profile. This kind of cancer are usually associated, meaning that patients with TNBC usually present the subtype basal-like, but this is not always the case, as these classifications are different from the biological point of view, nevertheless this analysis has proved that the majority of proteins which are over-expressed or under-expressed in patients with TNBC are also over-expressed or under-expressed in patients with basal-like breast cancers.
+
+Further research on the function of these proteins as well as on the proteins which are differentially expressed in one comparison but not in other, could shed light in the biological and molecular differences between the development of these breast cancers which are known for its aggressiveness. With this regard, further research should focus on Gene Set Enrichment Analysis, which could allow to get a more comprehensive view of the classes of proteins over-represented in these sets of proteins.
