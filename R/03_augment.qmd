@@ -67,7 +67,7 @@ prot_clin_cl <- prot_clin_cl |>
   rename(Age.at.Initial.Pathologic.Diagnosis = Age)
 ```
 
-With good practices purpose, we use factors to represent the categorical data.
+For good practices purpose, we use factors to represent the categorical data.
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
@@ -80,7 +80,7 @@ prot_clin_cl <- prot_clin_cl |>
                                         "[80, 90)")))
 ```
 
-According to the WHO, most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
+According to the [WHO](https://www.who.int/news-room/fact-sheets/detail/menopause), most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
 
 `[30, 45)` Pre-menopausal
 
@@ -112,14 +112,14 @@ prot_clin_cl <- prot_clin_cl %>%
 
 ### 03.2.2. Targeting Triple-negative breast cancer (TNBC)
 
-Given that TNBC tends to be more agrresive than other types of breast cancer and has not approved targeted treatments, it may be interesting to identify and analyse individuals suffering from TNBC. Therefore, we created a column to specifically target TNBC, encoding individuals as TNBC-positive or TNBC-negative. Before creating the new column, we check how many individuals have missing values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` .
+Given that TNBC tends to be more aggressive than other types of breast cancer and has no approved targeted treatments, it may be interesting to identify and analyze individuals suffering from TNBC. Therefore, we created a column to specifically target TNBC, encoding individuals as TNBC-positive or TNBC-negative. Before creating the new column, we check how many individuals have missing values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` .
 
 ```{r}
 prot_clin_cl |>
   filter(is.na(ER.Status) | is.na(PR.Status) | is.na(HER2.Final.Status))
 ```
 
-The only individuals that have NA values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` are the three healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the `TNBC` column.
+The only individuals that have NA values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` are the 3 healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the `TNBC` column.
 
 As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value 0, while the rest will be assigned 1.
 
@@ -138,7 +138,7 @@ prot_clin_cl <- prot_clin_cl |>
 
 ### 03.2.3. ER/PR/HER2 status
 
-TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negative. However, it might be interesting to study other combinations as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`. We encoded them as:
+TNBC is a specific case of the ER/PR/HER2 status, in which no receptors of these 3 types are found on the tumorous cells (hence, triple-negative). More background information on this can be found in `04_describe.qmd` section of this project. However, it might be interesting to study other combinations of these receptors as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`. We encoded them as:
 
 -   0 : TNBC
 
@@ -192,7 +192,7 @@ prot_clin_cl <- prot_clin_cl |>
 
 ### 03.2.4. Simplify AJCC stages
 
-Our data has two columns regarding AJCC, `AJCC.Stage` and `Converted.Stage`, with the latter referring to the translation of information from one edition of the AJCC staging system to another. In order to simplify further analysis and gather all data regarding AJCC into just one column, we will simplify the AJCC stages to I, II, III, and IV. For example, "Stage I", "Stage IA" and "Stage IB" will all be considered "Stage I".
+Our data has two columns regarding the AJCC classification of the extent of a cancer, `AJCC.Stage` and `Converted.Stage`, with the latter referring to the translation of information from one edition of the AJCC staging system to another. In order to simplify further analysis and gather all data regarding AJCC into just one column, we will simplify the AJCC stages to I, II, III, and IV. For example, "Stage I", "Stage IA" and "Stage IB" will all be considered "Stage I".
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
