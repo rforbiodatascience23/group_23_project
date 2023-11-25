@@ -28,7 +28,7 @@ clinical <- read.csv("../data/_raw/clinical_data_breast_cancer.csv")
 
 ## 01.2 Join the proteomes and clinical tables/tibbles
 
-The names in the first column of the clinical data should be the same as the rownames for the 77 proteome data, at least the columns which correspond to cancer patients.
+The names in the first column of the clinical data should be the same as the row names for the 77 proteome data, at least the columns which correspond to cancer patients.
 
 ```{r}
 proteomes_77 <- as_tibble(proteomes_77)
@@ -92,7 +92,7 @@ proteomes_77_pivot <- proteomes_77 |>
 proteomes_77_pivot
 ```
 
-Now, taking into account the duplicates, we will modify the clinical table to include the rows corresponding to the duplicates, using the names f the duplicates, so that after the join that it is intended to do, these samples do not contain NAs in their clinical information.
+Now, taking into account the duplicates, we will modify the clinical table to include the rows corresponding to the duplicates, using the names of the duplicates, so that after the join, these samples do not contain NAs in their clinical information.
 
 ```{r}
 clinical <- clinical |>
@@ -103,7 +103,7 @@ clinical <- clinical |>
   
 ```
 
-Having the `proteomes_77` file pivoted to match the sample IDs of the `clinical` file, we can join both data frames into the final `01_dat_load.tsv` file with a *right_join*. The last rows of this final dataset, that corresponds to the 3 duplicated samples and the 3 healthy-individual observations, have some 'Na' values as these rows do not have information registered in the `clinical` file. Right now, we are not caring about fixing this issue, but it will be later fixed in the `02_clean.qmd` script.
+Having the `proteomes_77` file pivoted to match the sample IDs of the `clinical` file, we can join both data frames into the final `01_dat_load.tsv` file with a *right_join*. The last rows of this final dataset, that corresponds to the 3 duplicated samples and the 3 healthy-individual observations, have some 'Na' values as these rows do not have information registered in the `clinical` file. Right now, we are not dealing with this issue, but it will be later fixed in the `02_clean.qmd` script.
 
 ```{r}
 final_data <- right_join(clinical, 
@@ -124,7 +124,7 @@ final_data |>
 
 ## 01.4 Additional metadata files
 
-As the `gene_symbol` and `gene_name` information does not completely fit in the `01_dat_load.tsv` data frame (as these variables are not samples with gene_expression values), we considered to create an additional file with this information for each `RefSeq_accession_number` (in case it could be useful for future analysis). The procedure followed to generate this extra file is the same as the one explained for pivoting the `proteomes_77` data frame.
+As the `gene_symbol` and `gene_name` information do not completely fit in the `01_dat_load.tsv` data frame (these variables are not samples with gene_expression values), we considered to create an additional file with this information for each `RefSeq_accession_number` (in case it could be useful for future analysis). To generate this extra file we followed the same procedure as the one used for pivoting the `proteomes_77` data frame, explained in the earlier steps.
 
 ```{r}
 gene_metadata <- proteomes_77 |>

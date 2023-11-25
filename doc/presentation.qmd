@@ -1,0 +1,81 @@
+---
+title: "Group23 Final Project Presentation"
+author: "Group_23"
+format: 
+  revealjs: 
+    incremental: true   
+    theme: moon
+    auto-stretch: false
+editor: visual
+css: style.css
+---
+
+```{css}
+<style> .source-code { font-size: 2px; }</style>
+```
+
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+
+## Bullets
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+## Code
+
+When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
+
+```{r}
+1 + 1
+```
+
+## Try (you can feel free to remove it)
+
+::: columns
+::: {.column width="40%"}
+::: {style=".font-size"}
+```{r, font-size: 2px}
+#| eval: false
+#| echo: true
+
+# Perform k-means clustering
+kmeans_PAM50_5 <- PAM50_data |>
+  kmeans(centers = 5)
+
+# Define the hulls for getting the points that define the shapes of each cluster
+hulls <- PAM50_cluster_data |>
+  group_by(Cluster_5) |>
+  group_modify(~ .x[chull(.x$PC1, 
+                          .x$PC2), 
+                    ])
+
+# Plot the final comparison
+PAM50_cluster_data |>
+  ggplot(mapping = aes(PC1,
+                       PC2,
+                       fill = factor(Cluster_5))) +
+    scale_fill_manual(values = Cluster_colors) +
+    scale_color_manual(values = PAM50_colors) +
+    geom_point(mapping = aes(color = PAM50.mRNA),
+               size = 1) +
+    geom_polygon(data = hulls,
+                 alpha = .1) +
+    guides(fill = "none",
+           color = guide_legend(title = "PAM50 classes")) +
+    labs(title = "PAM50 classification compared to the predicted clusters\n(K-means clusters represented as a grey contour)",
+         x = "Fitted PC1 (33.46 %)",
+         y = "Fitted PC2 (12.61 %)") +
+    theme_light() +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+:::
+:::
+
+::: {.column width="60%"}
+![](../results/Kmeans_PAM50_clusters.png){fig-align="right" width="50%"}
+:::
+:::

@@ -1,0 +1,564 @@
+---
+title: "02_clean"
+author: "Group_23"
+format:
+  html:
+    embed-resources: true
+editor: visual
+---
+
+# 05. Analysis - PCA
+
+```{r}
+#| eval: true 
+#| message: false
+library(tidyverse)
+library(broom)
+library(cowplot)
+```
+
+## 05.1. Load data from .tsv files
+
+```{r}
+prot_clin <- read.delim("../data/03_dat_aug.tsv")
+```
+
+## 05.2. PCA for all individuals based on all proteomic data.
+
+In our initial analysis, we will examine the proteomic data across all samples, taking into account both cancerous and healthy individuals. Our aim is to analyze if differences in the proteomes allow to see differences individuals.
+
+Hence, in this first analysis we do not use the clinical data. First, we get a subset only with the proteomic data. All of the values are numeric, so the `prcomp()` function can work with them without further processing.
+
+```{r}
+proteomes <- prot_clin |>
+  select(#Complete.TCGA.ID,
+         matches("^NP"),
+         matches("^XP"),
+         matches("^YP"))
+```
+
+In this case, it is not necessary to scale the data.
+
+```{r}
+pca_prot_fit <- proteomes |>
+  prcomp(scale=FALSE)
+```
+
+Since we want to analyze possible differences between cancer patients and healthy individuals, we create new variables for differentiating them. For a deeper analysis, in one varaible we will group the individuals with cancer according to the type of tumor they have, and in the other variable according to the AJCC stage.
+
+```{r}
+prot_clin_exp <- prot_clin |>
+  mutate(
+    Cancer_tumor = case_when(
+      row_number() > n() - 3 ~ "Healthy",
+      Tumor == "T1" ~ "T1",
+      Tumor == "T2" ~ "T2",
+      Tumor == "T3" ~ "T3",
+      Tumor == "T4" ~ "T4"
+    )
+  ) |>
+  relocate(Cancer_tumor, .after = Tumor)
+```
+
+```{r}
+
+prot_clin_exp <- prot_clin_exp |>
+  mutate(
+    Cancer_AJCC = case_when(
+      row_number() > n() - 3 ~ "Healthy",
+      AJCC.Simp == "Stage I" ~ "Stage I",
+      AJCC.Simp == "Stage II" ~ "Stage II",
+      AJCC.Simp == "Stage III" ~ "Stage III",
+      AJCC.Simp == "Stage IV" ~ "Stage IV"
+    )
+  ) |>
+  relocate(Cancer_AJCC, .after = AJCC.Simp)
+```
+
+#### 05.2.1. PCA on proteomic data.
+
+We can plot the data on the first two principal components, and color according to tumor.
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_tumor)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(T1 = "mediumorchid3",
+               T2 = "springgreen4",
+               T3 = "coral",
+               T4 = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+We can also color according to the AJCC stage.
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_AJCC)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Stage I" = "mediumorchid3",
+               "Stage II" = "springgreen4",
+               "Stage III" = "coral",
+               "Stage IV" = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Now we look at the data in the PC coordinates. We plot the rotation matrix. Think if we want to analyze this or if it is not informative in this case.
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "rotation")
+```
+
+When calculating the variance explain, we can see that the two first principal components only account for 22% of the total variation. This may be one of the reasons why we don't see a clear clustering of the samples when plotting the PCA results on PC1 and PC2. In fact, the first 10 principal components are necessary to reach 50% of the variation.
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "eigenvalues")
+```
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "#56B4E9", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:9) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal_hgrid(12)
+```
+
+## 05.3. PCA for all individuals based on PAM50 proteomic data.
+
+We decided to do an analysis for a subset of selected proteins: those indicated in the PAM50 dataset, known to be related to breast cancer.
+
+```{r}
+# Read PAM50 metadata file
+PAM50_ref <- read.delim("../data/_raw/PAM50_proteins.csv", 
+                        sep = ",") |>
+  select(RefSeqProteinID)
+
+PAM50_ref_names <- PAM50_ref |>
+  pull(RefSeqProteinID)
+
+# Select only the protein-expression data for the PAM50 genes
+PAM50_data <- prot_clin |>
+  select(one_of(PAM50_ref_names))
+```
+
+We perform PCA using the data from these selected proteins.
+
+```{r}
+pca_PAM50_fit <- PAM50_data |>
+  prcomp(scale=FALSE)
+```
+
+In this case, we will also color by subtype of cancer (Basal-like, luminal A, Luminal B, or HER2- enriched).
+
+```{r}
+prot_clin_exp <- prot_clin_exp |>
+  mutate(
+    Cancer_subtype = case_when(
+      row_number() > n() - 3 ~ "Healthy",
+      PAM50.mRNA == "Basal-like" ~ "Basal-like",
+      PAM50.mRNA == "Luminal A" ~ "Luminal A",
+      PAM50.mRNA == "Luminal B" ~ "Luminal B",
+      PAM50.mRNA == "HER2-enriched" ~ "HER2-enriched"
+    )
+  ) |>
+  relocate(Cancer_subtype, .after = PAM50.mRNA)
+```
+
+We plot the results on the two first principal components, and we color by type of tumor.
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_tumor)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(T1 = "mediumorchid3",
+               T2 = "springgreen4",
+               T3 = "coral",
+               T4 = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+If we color by AJCC stage, we get the following result.
+
+```{r}
+
+pca_PAM50_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_AJCC)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Stage I" = "mediumorchid3",
+               "Stage II" = "springgreen4",
+               "Stage III" = "coral",
+               "Stage IV" = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Finally, we color by tumor subtype.
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_subtype)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Basal-like" = "mediumorchid3",
+               "Luminal A" = "springgreen4",
+               "Luminal B" = "coral",
+               "HER2-enriched" = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+By selecting proteins that are known to be related to cancer, the amount of variant explained by the first principal components increases considerably. Limiting the columns to data from the PAM50 proteins, PC1 accounts for 39.54% of the variance (compared to 13.2% when using all proteins), and the two first principal components explain more than 50% of the total variance (54,1 %). Moreover, the 10 first principal components account for 88.7% of the variance.
+
+```{r}
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues")
+```
+
+```{r}
+
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "#56B4E9", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:30) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal_hgrid(12)
+```
+
+## 05.4. PCA for cancer samples including clinical data and all proteomic data.
+
+In a different approach, we decided to include the clinical data to perform PCA. Since the three healthy individuals lack clinical data, and imputing values such as "No tumor" would introduce misleading correlations in the data, we decided to drop these samples in this part of the analysis, and work only with the individuals suffering from cancer.
+
+```{r}
+prot_clin_cancer <- prot_clin |>
+  slice_head(n = -3)
+```
+
+In the next step for preparing the data, we will keep the column that classifies age according to menopause, and drop the rest of the age-related columns, since we do not want to input this information into the PCA. We also drop the samples' IDs
+
+```{r}
+prot_clin_cancer <- prot_clin_cancer |>
+  select(-Age.at.Initial.Pathologic.Diagnosis,
+         -Age.Ini.Diagnostic.group,
+         -Complete.TCGA.ID)
+```
+
+PCA can only take in numerical values. Therefore, it is necessary to label-encode the data before taking any further steps.
+
+```{r}
+
+columns_to_encode <- c("Gender", 
+                       "ER", 
+                       "PR", 
+                       "HER2",
+                       "ER_PR_HER2",
+                       "TNBC", 
+                       "Tumor",
+                       "Node",
+                       "Node.Coded",
+                       "Metastasis",
+                       "AJCC.Simp",
+                       "PAM50.mRNA",
+                       "Age.Menopausal.group"
+                       )
+
+prot_clin_cancer_encoded <- prot_clin_cancer |>
+  mutate_at(columns_to_encode, as.factor) |>
+  mutate_at(columns_to_encode, as.numeric)
+```
+
+After these transformations, the data is ready for PCA analysis.
+
+**Questions**:
+
+-   Should we use 1-hot encoding for PAM50.mRNA?
+
+-   Should we use 1-hot encoding for ER_PR_HER2, or just drop it?
+
+-   Should we drop Node.Coded?
+
+```{r}
+pca_prot_fit <- prot_clin_cancer_encoded |>
+  prcomp(scale=FALSE)
+```
+
+We plot the results on the two first principal components, and color according to tumor type.
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Tumor)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(T1 = "mediumorchid3",
+               T2 = "springgreen4",
+               T3 = "coral",
+               T4 = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Now we color by AJCC stage.
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = AJCC.Simp)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Stage I" = "mediumorchid3",
+               "Stage II" = "springgreen4",
+               "Stage III" = "coral",
+               "Stage IV" = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Color by TNBC
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Positive" = "red1",
+               "Negative" = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Color by age
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Age.Menopausal.group)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("[30, 45)" = "mediumorchid3",
+               "[45, 55)" = "springgreen4",
+               "[55, 90)" = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Color by subtype of cancer
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = PAM50.mRNA)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Basal-like" = "mediumorchid3",
+               "Luminal A" = "springgreen4",
+               "Luminal B" ="red1",
+               "HER2-enriched" = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+ER_PR_HER2
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = ER_PR_HER2)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("1" = "mediumorchid3",
+               "2" = "springgreen4",
+               "0" ="red1",
+               "3" = "#0072B2",
+               "4" = "coral",
+               "5" = "turquoise3",
+               "6" = "gold3",
+               "7" = "deeppink")
+            ) +
+  theme_half_open(12) + background_grid()
+```
+
+When adding the clinical data, the variance explained is very similar to the values obtained when using all the proteomic data on all samples.
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "eigenvalues")
+```
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "#56B4E9", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:9) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal_hgrid(12)
+```
+
+## 05.4. PCA for cancer samples including clinical data and PAM50 proteomic data.
+
+In this last analysis, we replicated the steps of the previous section. However, in this case, the proteins not included in the PAM50 dataset were excluded for the analysis.
+
+```{r}
+PFAM_prot_cli <- prot_clin_cancer_encoded |>
+  relocate(Age.Menopausal.group, .after = Gender) |>
+  select(1:14, one_of(PAM50_ref_names))
+
+```
+
+```{r}
+pca_PAM50_fit <- PFAM_prot_cli |>
+  prcomp(scale=FALSE)
+```
+
+We plot the results on the two first principal components, and color according to tumor type.
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Tumor)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(T1 = "mediumorchid3",
+               T2 = "springgreen4",
+               T3 = "coral",
+               T4 = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+AJCC stage
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = AJCC.Simp)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Stage I" = "mediumorchid3",
+               "Stage II" = "springgreen4",
+               "Stage III" = "coral",
+               "Stage IV" = "red1",
+               Healthy = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+TNBC
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Positive" = "red1",
+               "Negative" = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Age
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Age.Menopausal.group)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("[30, 45)" = "mediumorchid3",
+               "[45, 55)" = "springgreen4",
+               "[55, 90)" = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+Subtype of cancer
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = PAM50.mRNA)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Basal-like" = "mediumorchid3",
+               "Luminal A" = "springgreen4",
+               "Luminal B" ="red1",
+               "HER2-enriched" = "#0072B2")
+  ) +
+  theme_half_open(12) + background_grid()
+```
+
+ER_PR_HER2
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = ER_PR_HER2)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("1" = "mediumorchid3",
+               "2" = "springgreen4",
+               "0" ="red1",
+               "3" = "#0072B2",
+               "4" = "coral",
+               "5" = "turquoise3",
+               "6" = "gold3",
+               "7" = "deeppink")
+            ) +
+  theme_half_open(12) + background_grid()
+```
+
+As occurred in the previous section, the variance explained greatly resembles the values obtained with the proteomic data for the PAM50 proteins for all individuals.
+
+```{r}
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues")
+```
+
+```{r}
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, percent)) +
+  geom_col(fill = "#56B4E9", alpha = 0.8) +
+  scale_x_continuous(breaks = 1:10) +
+  scale_y_continuous(
+    labels = scales::percent_format(),
+    expand = expansion(mult = c(0, 0.01))
+  ) +
+  theme_minimal_hgrid(12)
+```

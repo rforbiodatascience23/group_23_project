@@ -57,8 +57,8 @@ prot_clin_cl <- prot_clin_cl |>
   rename(Age = Age.at.Initial.Pathologic.Diagnosis) |>
   mutate(
     Age.Ini.Diagnostic.group = case_when(
-      is.na(Age) ~ NA_character_,
-      Age < 40 ~ "[30, 40)",
+      is.na(Age) ~ "NA_character_",
+      Age >= 30 & Age < 40 ~ "[30, 40)",
       Age >= 40 & Age < 50 ~ "[40, 50)",
       Age >= 50 & Age < 60 ~ "[50, 60)",
       Age >= 60 & Age < 70 ~ "[60, 70)",
@@ -69,31 +69,52 @@ prot_clin_cl <- prot_clin_cl |>
   rename(Age.at.Initial.Pathologic.Diagnosis = Age)
 ```
 
+With good practices purpose, we use factors to represent the categorical data.
+
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
   mutate(Age.Ini.Diagnostic.group = factor(Age.Ini.Diagnostic.group,
-                            levels =  c("[40, 50)", 
+                            levels =  c("[30, 40)",
+                                        "[40, 50)", 
                                         "[50, 60)",
                                         "[60, 70)", 
                                         "[70, 80)", 
                                         "[80, 90)")))
 ```
 
+According to the WHO, most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
+
+`[30, 45)` Pre-menopausal
+
+`[45, 55)` Menopausal
+
+`[55, 90)` Post-menopausal
+
+```{r}
+prot_clin_cl <- prot_clin_cl %>% 
+  rename(Age = Age.at.Initial.Pathologic.Diagnosis) %>% 
+  mutate(
+    Age.Menopausal.group = case_when(
+      is.na(Age) ~"NA_character_",
+      Age >= 30 & Age < 45 ~ "[30, 45)",
+      Age >= 45 & Age < 55 ~ "[45, 55)",
+      Age >= 55 & Age < 90 ~ "[55, 90)"
+    )
+  ) %>% 
+  rename(Age.at.Initial.Pathologic.Diagnosis = Age)
+```
+
+```{r}
+prot_clin_cl <- prot_clin_cl %>% 
+  mutate(Age.Menopausal.group =  factor(Age.Menopausal.group,
+                                        levels = c("[30, 45)",
+                                                   "[45, 55)",
+                                                   "[55, 90)")))
+```
+
 ### 03.2.2. Targeting Triple-negative breast cancer (TNBC)
 
-Triple-negative breast cancer (TNBC) refers to cancers that lack expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). It may be interesting to identify the individuals suffering from TNBC because this type of breast cancer tends to be more aggressive than others and, unlike other breast cancer subtypes, there are no approved targeted treatments available. For instance, TNBC are not responsive to hormonal therapy. Thus, treatments may include chemotherapy. Furthermore, even if TNBC tumor cells are sensitive to chemotherapy, early relapse and visceral metastasis are common in this type of breast cancer.
-
-More interesting information, that we can use for the "Analysis" part:
-
-"TNBC is characterized by its unique molecular profile, aggressive behavior, distinct patterns of metastasis, and lack of targeted therapies. Although not synonymous, the majority of triple-negative breast cancers carry the **"basal-like"** molecular profile on gene expression arrays. The majority of BRCA1-associated breast cancers are triple-negative and basal-like; the extent to which the BRCA1 pathway contributes to the behavior of sporadic basal-like breast cancers is an area of active research. Epidemiologic studies illustrate a high prevalence of triple-negative breast cancers among **younger** women and those of African descent. Increasing evidence suggests that the risk factor profile differs between this subtype and the more common luminal subtypes. Although sensitive to chemotherapy, early relapse is common and a predilection for visceral metastasis, including brain metastasis, is seen."
-
-Add references :
-
--   <https://www.uptodate.com/contents/er-pr-negative-her2-negative-triple-negative-breast-cancer/print#:~:text=Triple%2Dnegative%20breast%20cancer%20(TNBC,other%20types%20of%20breast%20cancer.>
-
--   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2868264/>
-
-Thus, we decided to create a new variable to encode individuals as TNBC-positive or TNBC-negative. Before creating the new column, we check how many individuals have missing values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` .
+Given that TNBC tends to be more agrresive than other types of breast cancer and has not approved targeted treatments, it may be interesting to identify and analyse individuals suffering from TNBC. Therefore, we created a column to specifically target TNBC, encoding individuals as TNBC-positive or TNBC-negative. Before creating the new column, we check how many individuals have missing values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` .
 
 ```{r}
 prot_clin_cl |>
@@ -102,7 +123,7 @@ prot_clin_cl |>
 
 The only individuals that have NA values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` are the three healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the `TNBC` column.
 
-As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value "Positive", while the rest will be assigned "Negative".
+As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value 0, while the rest will be assigned 1.
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
@@ -110,8 +131,8 @@ prot_clin_cl <- prot_clin_cl |>
   mutate(
     TNBC = case_when(
       is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_character_,
-      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "Positive",
-      TRUE ~ "Negative" # All other cases
+      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "0",
+      TRUE ~ "1" # All other cases
     )
   )
 
@@ -119,7 +140,25 @@ prot_clin_cl <- prot_clin_cl |>
 
 ### 03.2.3. ER/PR/HER2 status
 
-TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negative. However, it might be interesting to study other combinations as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`.
+TNBC is a specific case of the ER/PR/HER2 status, in which all of them are negative. However, it might be interesting to study other combinations as well. Therefore, we create a column that provides information about whether the individuals are positive or negative for `ER` , `PR`, and `HER2`. We encoded them as:
+
+-   0 : TNBC
+
+-   1: HER2
+
+-   2 : PR
+
+-   3 : ER
+
+-   4 : ER/PR
+
+-   5 : ER/HER2
+
+-   6 : PR/HER2
+
+-   7 : ER/PR/HER2
+
+-   "\*": ER/PR but equivocal results on the test for HER2
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
@@ -133,7 +172,8 @@ prot_clin_cl <- prot_clin_cl |>
       ER == "Positive" & PR == "Positive" & HER2 == "Negative" ~ "4", # "ER/PR",
       ER == "Positive" & PR == "Negative" & HER2 == "Positive" ~ "5", # "ER/HER2",
       ER == "Negative" & PR == "Positive" & HER2 == "Positive" ~ "6", #"PR/HER2",
-      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "7"  #"ER/PR/HER2"
+      ER == "Positive" & PR == "Positive" & HER2 == "Positive" ~ "7", #"ER/PR/HER2"
+      ER == "Positive" & PR == "Positive" & HER2 == "Equivocal" ~ "*" #"ER/PR but equivocal for                                                                         HER2"
     )
   )
 ```
@@ -148,12 +188,11 @@ prot_clin_cl <- prot_clin_cl |>
                                         "4",
                                         "5",
                                         "6",
-                                        "7")))
+                                        "7",
+                                        "*")))
 ```
 
 ### 03.2.4. Simplify AJCC stages
-
-The American Joint Committee on Cancer (AJCC) for breast cancer is a staging system for classifying the extent of a cancer based on the size of the tumor (T), lymph node involvement (N), and the presence or absence of metastasis (M).
 
 Our data has two columns regarding AJCC, `AJCC.Stage` and `Converted.Stage`, with the latter referring to the translation of information from one edition of the AJCC staging system to another. In order to simplify further analysis and gather all data regarding AJCC into just one column, we will simplify the AJCC stages to I, II, III, and IV. For example, "Stage I", "Stage IA" and "Stage IB" will all be considered "Stage I".
 
@@ -179,11 +218,31 @@ prot_clin_cl <- prot_clin_cl |>
                                         "Stage I")))
 ```
 
+## 03.3. Relocate columns
+
+Before proceeding further, we relocated the new columns before the proteomic columns.
+
+```{r}
+
+prot_clin_cl <- prot_clin_cl |> 
+  relocate(Age.Ini.Diagnostic.group , .after = Age.at.Initial.Pathologic.Diagnosis) |>
+  relocate(Age.Menopausal.group, .after = Age.Ini.Diagnostic.group) |>
+  relocate(TNBC, .after = HER2) |>
+  relocate(ER_PR_HER2, .after = TNBC) |>
+  relocate(AJCC.Simp, .after = Converted.Stage)
+```
+
 ## 03.3. Drop redundant columns
 
-Discuss this.
+Since we have created `AJCC.Simp` , there is no need for the `AJCC.Stage` and `Converted.Stage` columns, as they contain redundant information. Thus, we drop them.
 
-## 03.4. Save the new data in a .tsv file
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  select(-AJCC.Stage,
+         -Converted.Stage)
+```
+
+## 03.5. Save the new data in a .tsv file
 
 ```{r}
 prot_clin_cl |> 
