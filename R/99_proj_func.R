@@ -1,31 +1,36 @@
 volcano_plot <- function(data, condition_test){
   plt <- data |>
+    group_by(dif_exp) |>
+    mutate(label = case_when(dif_exp == "Up" ~  paste0(dif_exp, " (Count: ", n(), ")" ),
+                             dif_exp == "Down" ~  paste0(dif_exp, " (Count: ", n(), ")" ),
+                             dif_exp == "NS" ~  paste0(dif_exp))) |>
     ggplot(aes(x = estimate,
-                 y = -log10(p.value),
-                 color = dif_exp)) +
-    geom_point(alpha = 0.4) +
-      # geom_text_repel(aes(label = sign),
-      #                 max.overlaps = Inf,
-      #                 size = 2,
-      #                 box.padding = 0.2) +
-      # geom_hline(yintercept = 0) +
-    labs(title = paste0("Diferentially expressed proteins in the test: ", condition_test, " vs. Non-", condition_test),
-         subtitle = "Proteins highlighted either red or turquoise were significant after multiple test correction",
+               y = -log10(p.value),
+               colour = label)) +
+    geom_point(alpha = 0.4,
+               shape = "circle") +
+    labs(title = paste0("Differentially expressed proteins in the test: ",
+                        condition_test,
+                        " vs. Non-",
+                        condition_test),
+         subtitle = "Proteins highlighted in either red or blue were \nsignificant after multiple test correction",
          x = "Estimates", 
-         y = "-log10(p)") +
-    scale_color_manual(values = c("blue", "grey", "red")) +
+         y = expression(-log[10]~(p)),
+         color = "Differential expression") +
+    scale_color_manual(values = c("blue",
+                                  "grey",
+                                  "red")) +
     theme_minimal() +
     theme(legend.position = "right",
           plot.title = element_text(hjust = 0.5),
           plot.subtitle = element_text(hjust = 0.5)) 
   return(plt)
-  
 }
 
 DEA_proteins <- function(data_in, condition_test){
   
   # Needed for model fitting
-  col_name <- deparse(substitute(condition_test))
+  col_name <- deparse(substitute(condition_test)) 
   
   # First select only the columns corresponding to protein expression data 
   # and the column that corresponds to the condition that is to be tested
@@ -74,8 +79,8 @@ DEA_proteins <- function(data_in, condition_test){
     # Finally calculate the adjusted p-value and save as new variable q.value, and
     # based on that value create a new variable called is_significant
     mutate(q.value = p.adjust(p.value)) |>
-    mutate(dif_exp = case_when(q.value <= 0.05 & estimate > 0 ~ 'Up',
-                               q.value <= 0.05 & estimate < 0 ~ 'Down',
+    mutate(dif_exp = case_when(q.value <= 0.05 & estimate > 0 ~ "Up",
+                               q.value <= 0.05 & estimate < 0 ~ "Down",
                                q.value > 0.05 ~ 'NS'))
 
   # Call volcano_plot function
