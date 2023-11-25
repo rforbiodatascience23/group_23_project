@@ -284,8 +284,6 @@ The variable "Node" refers to the number of nearby lymph nodes that are affected
 
 -   N0: There is no cancer in nearby lymph nodes.
 
-<!-- -->
-
 -   N1, N2, N3: Refers to the number and location of lymph nodes that contain cancer. The higher the number after the N, the more lymph nodes that contain cancer.
 
 ```{r}

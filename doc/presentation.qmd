@@ -20,7 +20,7 @@ The data set consists of:
 
 -   A file containing the list of genes and proteins used by the PAM50 classification system.
 
-The analysis is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.
+The analysis of this data set is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.
 
 ## Materials and methods
 
