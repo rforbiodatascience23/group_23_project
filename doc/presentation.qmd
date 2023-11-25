@@ -30,6 +30,24 @@ The analysis is relevant for multiple potential applications: expression analysi
 
 ### Description of relevant variables
 
+-   Dropped variables (redundant or not relevant): Survival.Data.Form, Days.to.date.of.Death, Days.to.Date.of.Last.Contact, OS.Time, Vital.Status, Tumor..T1.Coded, Metastasis.Coded, AJCC.Stage, Converted.Stage and all the columns destined to cluster the data
+
+-   Created variables:
+
+    -   Age.Ini.Diagnostic.group: intervals of 10 years starting from 30 and going up until 90.
+
+    -   Age.Menopausal.group: `[30, 45)` Pre-menopausal, `[45, 55)` Menopausal, `[55, 90)` Post-menopausal.
+
+    -   ER_PR_HER2: level from 0 to 7 depending on hormonal receptors (ER, PR) present an the level of HER2.
+
+    -   TNBC: 0 if positive, 1 if negative
+
+    -   AJCC.Simp: simplified AJCC stages (I, II, III, and IV)
+
+## Materials and methods
+
+### Description of relevant variables
+
 ## Code
 
 When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
