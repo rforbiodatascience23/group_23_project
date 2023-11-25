@@ -6,3 +6,333 @@ format:
     embed-resources: true
 editor: visual
 ---
+
+# 06. KMeans analysis
+
+```{r}
+#| eval: true
+#| message: false
+#| warning: false
+
+library(tidyverse)
+library('broom')
+library('patchwork')
+library('ggrepel')
+
+if(!require('cowplot')) {
+  install.packages('cowplot')
+  library('cowplot')
+}
+```
+
+## 06.1. Load augmented data
+
+```{r}
+prot_clin_ag <- read.delim("../data/03_dat_aug.tsv") |>
+  as_tibble()
+```
+
+## 06.2. Preparing data for Kmeans (PAM50 genes)
+
+One of the possible analyses to check is clustering according to the PAM50 proteins. The PAM50 gene signature comprises 50 genes associated with specific biological processes and functions used to classify breast cancer tumors. This classification is the one we have in the column `PAM50.mRNA` from the clinical metadata information. It is important to note that the 3 healthy samples have 'NA' in their values, which could be converted to the 'Normal-like' category, as they are supposed to not have cancerous tumors.
+
+```{r}
+# Modification of 'NA' to 'Normal-like' category
+prot_clin_ag <- prot_clin_ag |>
+  mutate(PAM50.mRNA = ifelse(is.na(PAM50.mRNA), 
+                             'Normal-like', 
+                             PAM50.mRNA))
+
+# Get the unique possible classification values
+prot_clin_ag |>
+  distinct(PAM50.mRNA)
+```
+
+Having this information, we can try to run a KMeans clustering analysis to check if the protein-expression data of the PAM50 genes can resemble the clinical metadata information for the samples in the study. For that purpose, we need to filter our clean/augmented data to only keep the PAM50 protein columns.
+
+```{r}
+#| eval: true 
+#| message: false
+#| warning: false
+
+# Read PAM50 metadata file
+PAM50_ref <- read.delim("../data/_raw/PAM50_proteins.csv", 
+                        sep = ",") |>
+  select(RefSeqProteinID)
+
+# Keep the PAM50 protein ID names
+PAM50_ref_names <- PAM50_ref |>
+  pull(RefSeqProteinID)
+
+# Select only the protein-expression data for the PAM50 gene names
+PAM50_data <- prot_clin_ag |>
+  select(one_of(PAM50_ref_names))
+
+PAM50_data
+```
+
+We have 33 proteins related to the PAM50 list. Originally, we should have 43 out of the 50 PAM-genes list, but 10 columns were removed in the `02_clean.qmd` script because they had more than 10% of NAs and we considered those columns had too many NAs to consider them for further analyses.
+
+## 06.3. KMeans analysis
+
+### 06.3.1. Elbow analysis for optimal selection of clusters
+
+Considering the 33 PAM50 proteins we have data, we would like to manage to get a similar cluster representation that could resemble the idea of the 5 possible labels of types of breast cancer (basal, luminal A, luminal B, HER2-enriched, normal).
+
+First of all, we are goint to run a ELBOW analysis to check if they optimal number of cluster for our `PAM50 data` is close to 5 clusters. The elbow method for k-means involves calculating the sum of squared distances between data points and their assigned cluster centers for different values of centroids (k), and selecting the best centroid that balances between minimizing the sum squared distanced, but also avoiding excessive clusters.
+
+```{r}
+# Empty vector to store ELBOW results (wss)
+wss <- numeric()
+
+# Maximum number of clusters (k) to analyze
+max_k <- 20
+
+# Calculate wss for each k from 1 to max_k
+for (i in 1:max_k) {
+  kmeans_model <- PAM50_data |>
+    kmeans(centers = i, 
+           nstart = 10)
+  
+  wss[i] <- kmeans_model$tot.withinss
+}
+```
+
+```{r}
+# Create a tible with the results
+elbow_results <- tibble(k = seq(1,
+                                max_k),
+                        wss = wss)
+
+# Plot the results
+elbow_results |>
+  ggplot(mapping = aes(x = k,
+                       y = wss)) +
+  geom_line(color = "cornflowerblue") +
+  geom_point(color = "cornflowerblue") +
+  labs(title = "Elbow method for optimal cluster definition",
+       x = "Number of Clusters (k)",
+       y = "Within-Cluster Sum of Squares (WSS)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+We can observe that the optimal number of clusters lay around 4-6 clusters, as from 6 the change on the Within-Cluster Sum of Square Distances is smoother and therefore it is not optimal to have a number above 6 centroids.
+
+### 06.3.2. KMeans for PAM50 proteins
+
+After checking this, we can continue by defining a number of 5 clusters to see if the information from the 33 PAM50 genes that we have in our dataset can somehow resemble the 5 categories defined in the `PAM50.mRNA` column from the clinical metadata information.
+
+```{r}
+# Perform k-means clustering
+kmeans_PAM50_5 <- PAM50_data |>
+  kmeans(centers = 5, iter.max = 10)
+
+# New tibble with the cluster results
+PAM50_cluster_data <- PAM50_data |>
+  mutate(Complete.TCGA.ID = pull(prot_clin_ag,
+                                 Complete.TCGA.ID)) |>
+  mutate(PAM50.mRNA = pull(prot_clin_ag,
+                           PAM50.mRNA)) |>
+  mutate(Cluster_5 = as.character(kmeans_PAM50_5$cluster)) |>
+  select(Complete.TCGA.ID, PAM50.mRNA, Cluster_5, everything())
+```
+
+### 06.3.3. PCA for K-means representation
+
+For comparing the clusters obtained to the real labels defined in the `PAM50.mRNA` column, we are going to plot the clusters obtained from the k-means analysis and the data points represented according to the first two principal components obtained by performing PCA and color them accoridng to the `PAM50.mRNA` labels.
+
+Therefore, we first need to run a PCA analysis to our PAM50 data set to obtain a logical way to represent the data points ina 2-dimensional plot.
+
+```{r}
+pca_data <- PAM50_cluster_data |>
+  select(where(is.numeric))
+
+pca_fit <- pca_data |>
+  # scale() |>
+  prcomp()
+```
+
+Let's check first how much variance is explained by the first two principal components:
+
+```{r}
+pca_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(mapping = aes(PC, 
+                       percent)) +
+  geom_col(fill = "cornflowerblue", 
+           alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 
+                                  33, 
+                                  by = 5)) +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = expansion(mult = c(0, 
+                                                 0.01))) +
+  geom_text(mapping = aes(label = ifelse(PC %in% c(1, 2), 
+                                         scales::percent(percent), 
+                                         "")),
+            position = position_stack(vjust = 1.05), 
+            color = "black", 
+            size = 2) +
+  theme_minimal_hgrid(12) +
+  labs(title = "Variance explained by each PC",
+       x = "Principal Component (PC)",
+       y = "Percentage of variance explained (%)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+We can see that the variance explained by the first two principal components is close to 50%, which can be acceptable for correlating the PCA with the PAM50 classification according to the clinical information and the predictions obtained from the k-means method.
+
+## 06.4. Results and discussion
+
+Let's see first how our data points can be represented by the first two principal componets, and let's analyze if we can see some type of clustering according to the `PMA50.mRNA` classes.
+
+```{r}
+# Define custom colors for each level
+custom_colors <- c("red", "blue", "green", "purple", "orange")
+
+pca_fit |>
+  augment(pca_data) |>
+  ggplot(mapping = aes(.fittedPC1, 
+             .fittedPC2, 
+             color = PAM50_cluster_data$PAM50.mRNA)) + 
+  geom_point(size = 1.5) +
+  labs(title = "PCA scores",
+       x = "Fitted PC1 (39.54 %)", 
+       y = "Fitted PC2 (14.55 %)",
+       color = "PAM50 labels") +
+  scale_color_manual(values = custom_colors) +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+We can see a clear cluster for the Basal-like samples. Basal-like subtype of breast cancer is associated with a more developed breast cancer and, therefore, more dangerous. This could be the reason why these samples are the easiest to differentiate spacially from the other types in the PCA plot.
+
+For the rest of the subtypes, it gets more difficult to distinguish clear clusters but there is still some sort of separation. For example, the Luminal A subtype is associated with tumors with lower proliferation rates and better prognosis, which could be not too different from a normal-like sample as we can appreciate in our results from the PCA representation. Luminal B and HER2-enriched subtypes tend to be more aggressive to Luminal-A but not as aggressive as the Basal-like, which could also explain the ambiguity of both results when trying to define two different visual clusters for both subtypes according to the PCA plot. Nevertheless, we can appreciate some kind of gradual separation between Luminal-A, Luminal-B, and HER-2 enriched if we move from the right to the left when looking at x-axis orientation.
+
+Finally, let's represent the real labels defined by `PAM50.mRNA` column to the predicted clusters obtained with the k-means method to compare how this unsupervised algorithm can resemble the information for the 33 selected PAM50 proteins to the original PAM50 labels.
+
+```{r}
+# Add the PC1 and PC2 to the PAM50_cluster tibble
+pca_PC <- pca_fit |>
+  augment(pca_data)
+
+PAM50_cluster_data <- PAM50_cluster_data |> 
+  mutate(PC1 = pull(pca_PC,
+                    .fittedPC1)) |>
+  mutate(PC2 = pull(pca_PC,
+                    .fittedPC2))
+```
+
+```{r}
+# Define custom colors for PAM50 real values
+PAM50_colors <- c("red", 
+                  "blue", 
+                  "green", 
+                  "purple", 
+                  "orange")
+
+# Define custom colors for the predicted clusters
+Cluster_colors <- c("azure4", 
+                    "azure4", 
+                    "azure4", 
+                    "azure4", 
+                    "azure4")
+
+# Define the hulls for getting the points that define the shapes of each cluster
+hulls <- PAM50_cluster_data |>
+  group_by(Cluster_5) |>
+  group_modify(~ .x[chull(.x$PC1, 
+                          .x$PC2), 
+                    ])
+
+# Plot the final comparison
+PAM50_cluster_data |>
+  ggplot(mapping = aes(PC1,
+                       PC2,
+                       fill = factor(Cluster_5))) +
+    scale_fill_manual(values = Cluster_colors) +
+    scale_color_manual(values = PAM50_colors) +
+    geom_point(mapping = aes(color = PAM50.mRNA),
+               size = 1) +
+    geom_polygon(data = hulls,
+                 alpha = .1) +
+    guides(fill = "none",
+           color = guide_legend(title = "PAM50 classes")) +
+    labs(title = "PAM50 classification compared to the predicted clusters\n(K-means clusters represented as a grey contour)",
+         x = "Fitted PC1 (39.54 %)", 
+         y = "Fitted PC2 (14.55 %)") +
+    theme_light() +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+We can observe a practically perfect predicted cluster for defining the Basal-like samples. Only 2 out of the 21 samples inside the cluster predicted with k-means are not Basal-like samples and only 1 Basal-like sample is wrongly defined in another cluster (and that sample shows a weird protein expression compared to the other Basal-like samples according to the PCA representation).
+
+We can see that the HER2-enriched, Luminal-B, and Luminal-A predicted clusters also resemble quite good the difference between those samples, but it is true that in those cases it is more difficult to achieve perfect clusters (as te Basal-like one) as the samples from those classes show very diverse protein expression profile between them. This also makes sense with the correlation of Basal-like being the most dangerous subtype of cancer and, therefore, being the one with a most unique protein-expression profile for the PAM50 genes.
+
+There is one cluster left that could be focusing on the Normal-like type of samples, as those 3 are assigned in the same cluster, but it is still mixed with samples of the other type of subtypes. It could suggest that this last cluster is grouping the most outlier samples.
+
+It is relevant to consider that we were working with 33 PAM50 protein expression levels out of the 50 proteins that theoretically defined the 5 different classes. This can affect why some classes cannot be perfectly differentiated between them and why some of the clusters obtained cannot perfectly classify differently the 5 classes. Despite that, the results suggest that with better protein profiling, k-means could be successfully applied as to label breast cancer subtypes in new samples according to their PAM50 samples.
+
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/Kmeans_PAM50_clusters.png", plot = last_plot(), device = "png")
+```
+
+## 06.5. Alternative number of clusters
+
+Additionally, let's see if with 4 clusters instead of 5 there is a different in the results obtained, specially for a better clustering of the controversial subtypes.
+
+```{r}
+# Perform k-means clustering
+kmeans_PAM50_4 <- PAM50_data |>
+  kmeans(centers = 4)
+
+# New tibble with the cluster results
+PAM50_cluster_data <- PAM50_cluster_data |>
+  mutate(Cluster_4 = as.character(kmeans_PAM50_4$cluster)) |>
+  select(Complete.TCGA.ID, PAM50.mRNA, Cluster_5, Cluster_4, everything())
+```
+
+```{r}
+# Define custom colors for the predicted clusters
+Cluster_colors <- c("azure4", 
+                    "azure4", 
+                    "azure4", 
+                    "azure4")
+
+# Define the hulls for getting the points that define the shapes of each cluster
+hulls_4 <- PAM50_cluster_data |>
+  group_by(Cluster_4) |>
+  group_modify(~ .x[chull(.x$PC1, 
+                          .x$PC2), 
+                    ])
+
+# Plot the final comparison
+PAM50_cluster_data |>
+  ggplot(mapping = aes(PC1,
+                       PC2,
+                       fill = factor(Cluster_4))) +
+    scale_fill_manual(values = Cluster_colors) +
+    scale_color_manual(values = PAM50_colors) +
+    geom_point(mapping = aes(color = PAM50.mRNA),
+               size = 1) +
+    geom_polygon(data = hulls_4,
+                 alpha = .1) +
+    guides(fill = "none",
+           color = guide_legend(title = "PAM50 classes")) +
+    labs(title = "PAM50 classification compared to the predicted clusters\n(K-means clusters represented as a grey contour)",
+         x = "Fitted PC1 (39.54 %)", 
+         y = "Fitted PC2 (14.55 %)") +
+    theme_light() +
+    theme(plot.title = element_text(hjust = 0.5))
+```
+
+We can observe that the Basal-like cluster has not changed, so the information is still preserved with one less cluster. Nevertheless, the rest of the clusters now show a mixture of the rest of the subtypes. It is curious to see how the separation between Luminal-A, Luminal-B, and HER2-enriched subtypes is worse with only 4 cluster. Therefore, we can conclude that the separation was better achieved with 5 clusters, which correlates nicely with the original 5 types of breast cancer subtypes.
+
+## 06.6. Conclusions
+
+PAM50 genes are extremely relevant for identifying the stage of development of breast cancers, and k-means has shown the potential to be used as an accurate unsupervised learning algorithm for defining the different subtypes of breast cancers according to the PAM50 protein expression of affected individuals.
+
+In our analysis, we have shown how this method was able to detect almost perfectly the Basal-like samples, which are the ones associated with the most aggressive breast cancer type. For clinical purposes, successfully identifying the most dangerous development stage could be really important for medical diagnosis and treatment. For the rest of the samples, the clusters are not that precise and allow more uncertainty. Despite that, it is important to consider that we were only able to recover 33 PAM50 genes out of the 50 from our samples, which leads to the possibility that the method could improve the cluster's definition if all of the protein expression levels for the 50 genes are correctly measured.
