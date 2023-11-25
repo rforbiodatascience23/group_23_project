@@ -1,5 +1,5 @@
 ---
-title: "Group23 Final Project Presentation"
+title: "Final Project: A protein expression analysis of Breast Cancer"
 author: "Group_23"
 format: 
   revealjs: 
@@ -10,20 +10,25 @@ editor: visual
 css: style.css
 ---
 
-```{css}
-<style> .source-code { font-size: 2px; }</style>
-```
+## Introduction
 
-## Quarto
+The data set consists of:
 
-Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+-   iTRAQ proteome profiling of 77 breast cancer samples + 3 healthy samples, with expression values for \~12.000 proteins for each sample.
 
-## Bullets
+-   A file containing the clinical data of the 77 breast cancer patients (TCGA ID, sex, age, tumor receptors, etc.).
 
-When you click the **Render** button a document will be generated that includes:
+-   A file containing the list of genes and proteins used by the PAM50 classification system.
 
--   Content authored with markdown
--   Output from executable code
+The analysis is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.
+
+## Materials and methods
+
+### Workflow
+
+## Materials and methods
+
+### Description of relevant variables
 
 ## Code
 
