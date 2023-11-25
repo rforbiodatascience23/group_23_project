@@ -196,7 +196,7 @@ prot_clin_cl |>
   count(TNBC) 
 ```
 
-From this table we can extract that 19 patients are TNBC, while 8 patients are triple positive. The 61 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels.
+From this table we can extract that 19 patients are TNBC (encoded as 0 in this variable). The 61 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels (encoded as 1).
 
 ### 04.2.8. ER/PR/HER2 status distribution
 
