@@ -12,14 +12,16 @@ editor: visual
 ```{r}
 #| eval: true 
 #| message: false
-library(tidyverse)
+library("tidyverse")
 ```
 
 ## 03.1. Load data from .tsv files
 
 ```{r}
-prot_clin_cl <- read.delim("../data/02_dat_clean.tsv")
-gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
+prot_clin_cl <- read.delim("../data/02_dat_clean.tsv") |>
+  as_tibble()
+gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv") |>
+  as_tibble()
 ```
 
 ## 03.2. Data augmentation

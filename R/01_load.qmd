@@ -12,7 +12,7 @@ editor: visual
 ```{r}
 #| eval: true 
 #| message: false
-library(tidyverse)
+library("tidyverse")
 ```
 
 ## 01.1 Loading the raw data from `/data/_raw` directory

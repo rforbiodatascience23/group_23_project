@@ -37,6 +37,7 @@ The following R packages are used for this project:
 -   `cowplot`
 -   `patchwork`
 -   `ggrepel`
+-   `rentrez`
 
 If you are missing any in your RStudio environment, just install the necessary package by running the command: `install.packages("Package name")`.
 

@@ -12,7 +12,7 @@ editor: visual
 ```{r}
 #| eval: true 
 #| message: false
-library(tidyverse)
+library("tidyverse")
 ```
 
 ## 02.1. Load data from .tsv files

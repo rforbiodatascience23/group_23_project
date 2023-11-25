@@ -18,8 +18,10 @@ library(tidyverse)
 ## 04.1. Load data from .tsv files
 
 ```{r}
-prot_clin_cl <- read.delim("../data/03_dat_aug.tsv")
-gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv")
+prot_clin_cl <- read.delim("../data/03_dat_aug.tsv") |>
+  as_tibble()
+gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv") |>
+  as_tibble()
 ```
 
 ## 04.2. Descriptive statistics

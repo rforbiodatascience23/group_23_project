@@ -6,3 +6,101 @@ format:
     embed-resources: true
 editor: visual
 ---
+
+# 05. Differential expression analysis
+
+```{r}
+#| eval: true 
+#| message: false
+#| warning: false
+library("tidyverse")
+library("broom")
+library("ggrepel")
+```
+
+## 05.1. Introduction
+
+In the present quato document a Differential Expression Analysis of the available proteomics data is conducted. This kind of analysis allows to identify changes in the relative abundance of proteins between patients that present different conditions. In the present notebook two different conditions which were considered of interest will be studied:
+
+-   TTriple-Negative Breast Cancer (TNBC) vs. Non-TNBC
+
+-   Basal-Like vs. Non-Basal-Like
+
+This analysis is of special importance for understanding the underlying mechanisms of the disease, and it is also useful to identify proteins which can be used as bio-markers for disease diagnostics or prognosis, as the expression fo certain proteins may be associated with a special variant of the disease or a better or worse prognosis.
+
+As it was decided to test two conditions, and the code required for this analysis is fairly similar just taking into consideration the condition, it was decided to create several functions which can be accessed in the R script `99_proj_func.R`. More specifically, the functions are:
+
+-   `DEA_proteins`: takes as input the tibble with the data, and the column which is the condition to be tested (has to be called inside a `dplyr` pipeline). In this function the relevant columns for the analysis are selected and a nested data structure is created to fit a linear model for each of the proteins. The models are tidied afterwards, and the p-values are adjusted. This function calls the function `volcano_plot`, which creates a volcano plot with the results from the analysis. The output of the function is a list that includes a tibble with the results of the analysis and a volcano plot. Further description of the different steps can be found in the comments of the function.
+
+-   `volcano_plot:` creates a volcano plot with the data from the previous function. The Non Significant proteins are plotted in grey, the Upregulated in red and the Downregulated in blue.
+
+```{r}
+# Getting the functions from the code
+source("99_proj_func.R")
+```
+
+## 05.2. Load data from .tsv files
+
+```{r}
+data <- read.delim("../data/03_dat_aug.tsv") |>
+  as_tibble()
+```
+
+## 05.3. Triple-Negative Breast Cancer (TNBC) vs. Non-TNBC
+
+As it was already explained during the description of the daTa, in this data set the relative abundance of proteins in the samples is represented by means of Log2 iTRAQ ratios were used to represent the relative abundance of proteins in the samples.
+
+In the context of Breast Cancer studies it is of special interest the study of Triple-Negative Breast Cancer (TNBC), which are characterized for lacking the expression of the estrogen receptor (ER), progesterone receptor (PR), and human epidermal growth factor receptor 2 (HER2). This type of cncer is usually more aggresive and additionally, there are no approved targeted treatments available, and even if they can be treated with chemotherapy, patients that suffer from this cancer are more prone to early relapse and metastasis. Therefore further research on the differences between these type of cancer and others is of special interest.
+
+```{r}
+data <- data |>
+  mutate(
+    TNBC = case_when(
+      ER_PR_HER2 == 0 ~ 1, 
+      ER_PR_HER2 != 0 ~ 0,
+    )
+  )
+```
+
+```{r}
+DEA_TNBC <- data |>
+  DEA_proteins(TNBC)
+```
+
+```{r}
+DEA_TNBC$volc
+```
+
+```{r}
+library("clusterProfiler")
+library("org.Hs.eg.db")
+```
+
+Modify
+
+```{r}
+# prot_list <- prot_estimates |>
+#   filter(is_significant == 'yes') |>
+#   pull(Protein)
+# gsea_result <- gseGO(geneList = prot_list, OrgDb = org.Hs.eg.db, ont = "BP", nPerm = 1000, pvalueCutoff = 0.05, keyType = "REFSEQ")
+```
+
+```{r}
+res <- res %>% 
+  mutate(REFSEQ = sub("\\.\\d+", "", rownames(.))) %>% 
+  left_join(conv_tbl, by = "REFSEQ")
+```
+
+```{r}
+geneList <- prot_estimates |>
+  filter(is_significant == 'yes') |>
+  group_by(Protein) |>
+  arrange(-q.value) |> # sort descending (important!)
+  tibble::deframe() # convert to named vector
+head(geneList)
+tail(geneList)
+```
+
+## 05.4. Basal-like vs. Non-Basal-like
+
+"TNBC is characterized by its unique molecular profile, aggressive behavior, distinct patterns of metastasis, and lack of targeted therapies. Although not synonymous, the majority of triple-negative breast cancers carry the **"basal-like"** molecular profile on gene expression arrays. The majority of BRCA1-associated breast cancers are triple-negative and basal-like; the extent to which the BRCA1 pathway contributes to the behavior of sporadic basal-like breast cancers is an area of active research. Epidemiologic studies illustrate a high prevalence of triple-negative breast cancers among **younger** women and those of African descent. Increasing evidence suggests that the risk factor profile differs between this subtype and the more common luminal subtypes. Although sensitive to chemotherapy, early relapse is common and a predilection for visceral metastasis, including brain metastasis, is seen."
