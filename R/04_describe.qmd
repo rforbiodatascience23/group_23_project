@@ -41,18 +41,18 @@ The final data set contains 83 observations and 9 351 variables.
 
 ### 04.2.1. Complete TCGA ID
 
-The first column contains the IDs for the 80 patients, 77 with breast cancer and 3 healthy. 3 IDs were duplicated, probably because two different samples from the same patient were analyzed. Thus, in these 3 cases the `Complete_TCGA_ID` is followed by a .1 in the repeated sample. As discussed before, these 3 samples did not have clinical data, but since they come from the patient with the same `Complete_TCGA_ID,` we just copied the corresponding data into the .1 samples.
+The first column contains the IDs for the 80 patients, 77 with breast cancer and 3 healthy. 3 IDs were duplicated because biological replicates were analyzed in order to check the reliability of the method. Thus, in these 3 cases the `Complete_TCGA_ID` is followed by a `.1` in the repeated sample. As discussed before, these 3 samples did not have clinical data, but since they come from the patient with the same `Complete_TCGA_ID,` we just copied the corresponding data into the `.1` samples.
 
 ### 04.2.2. Gender distribution
 
-First we will take a look at the number of male and female samples.
+First, we will take a look at the number of male and female samples:
 
 ```{r}
 prot_clin_cl |>
   count(Gender)
 ```
 
-As expected, a great majority of samples was taken from female patients, since according to the World Health Organization (WHO), only approximately 0.5-1% of breast cancers occur in men (data from the 12th of July 2023). 3 of the samples are not classified either as male or female.
+As expected, a great majority of samples was taken from female patients, since according to the World Health Organization (WHO), only approximately 0.5-1% of breast cancers occur in men (data from the 12th of July 2023). 3 of the samples are not classified either as male or female (but this is not relevant as these samples are from the healthy ones).
 
 ### 04.2.3. Age at initial pathological diagnosis distribution
 
@@ -61,24 +61,33 @@ Age distribution was previously discussed in the `03_augmentation.qmd` file, wer
 ```{r}
 prot_clin_cl |>
   summarise(na_count = sum(is.na(Age.at.Initial.Pathologic.Diagnosis)),
-            mean = mean(as.numeric(Age.at.Initial.Pathologic.Diagnosis), na.rm = TRUE),
-            median = median(as.numeric(Age.at.Initial.Pathologic.Diagnosis), na.rm = TRUE),
-            sd = sd(as.numeric(Age.at.Initial.Pathologic.Diagnosis), na.rm = TRUE),
-            q25 = quantile(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 0.25, na.rm = TRUE),
-            q75 = quantile(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 0.75, na.rm = TRUE))
+            mean = mean(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 
+                        na.rm = TRUE),
+            median = median(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 
+                            a.rm = TRUE),
+            sd = sd(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 
+                    na.rm = TRUE),
+            q25 = quantile(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 
+                           0.25, 
+                           na.rm = TRUE),
+            q75 = quantile(as.numeric(Age.at.Initial.Pathologic.Diagnosis), 
+                           0.75, 
+                           na.rm = TRUE))
 ```
 
-From these statistics we can infer that the mean age at which breast cancer is diagnosed is 59, with most of the cases being diagnosed between the age of 49 and the age of 67. This matches the information provided by the WHO, that estimates that most of the cases, and hence the risk group for breast cancer, is women over 40 years old. The American Cancer Society establishes the median age at the time of breast cancer diagnosis in 62, and they claim that a very small number of women diagnosed with breast cancer are younger than 45. The distribution in our data is similar, being the median age at the time of breast cancer diagnosis 59 for the 83 samples in our data (3 NAs for age of the patient), close to the 62 provided by The American Cancer Society.
+From these statistics, we can infer that the mean age at which breast cancer is diagnosed is 59, with most of the cases being diagnosed between the age of 49 and the age of 67. This matches the information provided by the WHO, that estimates that most of the cases, and hence the risk group for breast cancer, is women over 40 years old. The American Cancer Society establishes the median age at the time of breast cancer diagnosis in 62, and they claim that a very small number of women diagnosed with breast cancer are younger than 45. The distribution in our data is similar, being the median age at the time of breast cancer diagnosis 59 for the 83 samples in our data (3 NAs for age of the patient), close to the 62 provided by The American Cancer Society.
 
 ### 04.2.4. Age at initial pathological diagnosis grouping
 
-In the data augmentation section, the samples were grouped together by age, into 6 age groups (gaps of 10 years). The age distribution among samples is shown in the histogram below, there are individuals for all intervals, even if some contain far more samples than others.
+In the data augmentation section, the samples were grouped together by age, into 6 age groups (gaps of 10 years). The age distribution among samples is shown in the histogram below. There are individuals for all intervals, even if some contain far more samples than others.
 
 ```{r}
-prot_clin_cl %>% 
-  filter(Age.Ini.Diagnostic.group != 'NA') %>%
+prot_clin_cl |> 
+  filter(Age.Ini.Diagnostic.group != 'NA') |>
   ggplot(mapping = aes(x = Age.Ini.Diagnostic.group)) +
-  geom_bar(fill = "cornflowerblue", color = "black", alpha = 0.7) +
+  geom_bar(fill = "cornflowerblue", 
+           color = "black", 
+           alpha = 0.7) +
   labs(title = "Age Distribution Across Samples",
        x = "Age Group",
        y = "Count") +
@@ -89,17 +98,19 @@ prot_clin_cl %>%
 
 ### 04.2.4. Menopausal age grouping
 
-This type of grouping is a variation of the previous one, in this case taking into account the risk age factors for the different types of breast cancer. Hence, we have a group for "young patients", this is women under the median age of diagnosis for breast cancer, but that are more prompt to develop a TNBC type of tumor. From 45 to 55 years-old we have the age group where breast cancer is normally diagnosed, but still contains data from patients younger than the median age where menopause starts (55), so these tumors are less prompt to have the hormone receptors. Lastly, we have the group of the older patients from 55 up to 90 years-old, where normally women already have gone through menopause and hence the observed tumors are more prompt to have hormone receptors.
+This type of grouping is a variation of the previous one, in this case taking into account the risk age factors for the different types of breast cancer. Hence, we have a group called "young patients" for women under the median age of diagnosis for breast cancer, but that are more prompt to develop a TNBC type of tumor. From 45 to 55 years old, we have the age group where breast cancer is normally diagnosed but still contains data from patients younger than the median age where menopause starts (55), so these tumors are less prompt to have the hormone receptors. Lastly, we have the group of the oldest patients from 55 up to 90 years old, where normally women already have gone through menopause and hence the observed tumors are more prompt to have hormone receptors.
 
-We investigated, whether the increased risk of developing a TNBC tumor at a younger age can be elucidated from our data. For this reason we analyzed the prevalence of TNBC across the three menopausal age groups. To mitigate the impact of one age group's samples dominating the entire data set and being more pronounced than samples belonging to other age groups, we performed normalization before the plotting step.
+We investigated, whether the increased risk of developing a TNBC tumor at a younger age can be elucidated from our data. For this reason, we analyzed the prevalence of TNBC across the three menopausal age groups. To mitigate the impact of one age group's samples dominating the entire data set and being more pronounced than samples belonging to other age groups, we performed normalization before the plotting step.
 
 ```{r}
-meno_age_group_members <- prot_clin_cl %>%
-  count(Age.Menopausal.group, name = "Total")
+meno_age_group_members <- prot_clin_cl |>
+  count(Age.Menopausal.group, 
+        name = "Total")
 
-meno_age_group_tnbc_positive <- prot_clin_cl %>%
-  filter(TNBC == '0') %>%
-  count(Age.Menopausal.group, name = "TNBC_Positive")
+meno_age_group_tnbc_positive <- prot_clin_cl |>
+  filter(TNBC == '0') |>
+  count(Age.Menopausal.group, 
+        name = "TNBC_Positive")
 
 meno_age_group_data <- left_join(meno_age_group_members, 
                                  y = meno_age_group_tnbc_positive, 
@@ -112,12 +123,14 @@ meno_age_group_data
 ```
 
 ```{r}
-meno_age_group_data %>%
-  filter(!is.na(Age.Menopausal.group)) %>%
+meno_age_group_data |>
+  filter(!is.na(Age.Menopausal.group)) |>
   ggplot(mapping = aes(x = Age.Menopausal.group, 
                        y = Proportion_TNBC_Positive, 
                        fill = Age.Menopausal.group)) +
-  geom_bar(stat = "identity", color = "black", alpha = 0.7) +
+  geom_bar(stat = "identity", 
+           color = "black", 
+           alpha = 0.7) +
   labs(title = "Normalized Triple-Negative Breast Cancer (TNBC) Across Age Groups",
        x = "\nMenopausal Age Group",
        y = "Proportion",
@@ -137,7 +150,10 @@ meno_age_group_data %>%
 ```{r}
 #| eval: true
 #| echo: false
-ggsave("../results/normalized_TNBC_across_menopausal.png", plot = last_plot(), device = "png", bg="white")
+ggsave("../results/normalized_TNBC_across_menopausal.png", 
+       plot = last_plot(), 
+       device = "png", 
+       bg="white")
 ```
 
 ### 04.2.5. ER and PR status
@@ -152,7 +168,8 @@ Knowing the hormone receptor status of the cancer is important for choosing the 
 
 ```{r}
 prot_clin_cl |>
-  count(ER, PR) 
+  count(ER, 
+        PR) 
 ```
 
 Out of the 80 samples with the clinical data recorded, 26 patients are negative for both receptors (hormone receptor-negative), 10 patients are positive for the estrogen receptor, and 44 patients are positive for both receptors. In our data there are no samples only positive for the PR receptor.
@@ -161,20 +178,23 @@ We can then investigate how does the ER- and PR- profile look like across differ
 
 ```{r}
 prot_clin_cl_er_pr <- prot_clin_cl |>
-  group_by(Age.Ini.Diagnostic.group, ER, PR) |>
+  group_by(Age.Ini.Diagnostic.group, 
+           ER, 
+           PR) |>
   count() 
 
 prot_clin_cl_er_pr 
 ```
 
 ```{r}
-prot_clin_cl_er_pr %>% 
-      filter(Age.Ini.Diagnostic.group != 'NA') %>% 
+prot_clin_cl_er_pr |>
+      filter(Age.Ini.Diagnostic.group != 'NA')|>
   ggplot(mapping = aes(x = Age.Ini.Diagnostic.group,
                        y = n,
                        fill = interaction(ER, PR))) +
   geom_bar(stat = "identity",
-          color = "black", alpha = 0.7) +
+          color = "black", 
+          alpha = 0.7) +
   labs(title = "ER and PR Combinations Across Age Groups",
        x = "Age Group",
        y = "Count",
@@ -190,7 +210,10 @@ prot_clin_cl_er_pr %>%
 ```{r}
 #| eval: true
 #| echo: false
-ggsave("../results/ER_PR_across_age_groups.png", plot = last_plot(), device = "png", bg="white")
+ggsave("../results/ER_PR_across_age_groups.png", 
+       plot = last_plot(), 
+       device = "png", 
+       bg="white")
 ```
 
 ### 04.2.6. HER2 status
@@ -202,7 +225,7 @@ prot_clin_cl |>
   count(HER2)
 ```
 
-Out of the 80 samples with this clinical data recorded (3 samples have NA values for this attribute), 60 patients are HER-2 negative, 19 HER-2 positive and 1 is equivocal. The "equivocal" status corresponds to a result of 2+ in the immunohistochemistry (IHC) test, which is one of the tests used to find out if cancer cells have a high level of the HER2 protein. It means that the HER2 status needs to be tested with a fluorescence *in situ* hybridization **(**FISH) test to clarify the result.
+Out of the 80 samples with this clinical data recorded (3 samples have NA values for this attribute), 60 patients are HER-2 negative, 19 HER-2 positive and 1 is equivocal. The "equivocal" status corresponds to a result of 2+ in the immunohistochemistry (IHC) test, which is one of the tests used to find out if cancer cells have a high level of the HER2 protein. It means that the HER2 status needs to be tested with a fluorescence *in situ* hybridization (FISH) test to clarify the result.
 
 ### 04.2.7. Triple-negative breast cancer (TNBC) case count
 
@@ -250,7 +273,8 @@ We can also see these types of cancer distributed by age:
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Menopausal.group, ER_PR_HER2) |>
+  group_by(Age.Menopausal.group, 
+           ER_PR_HER2) |>
   count()
 ```
 
@@ -273,7 +297,8 @@ Most of the tumors in our data set are stage 2, followed by 11 cases both for st
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Ini.Diagnostic.group, Tumor) |>
+  group_by(Age.Ini.Diagnostic.group, 
+           Tumor) |>
   count() 
 ```
 
@@ -292,15 +317,16 @@ prot_clin_cl |>
   count(Node)
 ```
 
-Most of the patients in our data set do not have cancer in the nearby lymph nodes.
+Most of the patients in our data set do not have cancer in the nearby lymph nodes. This is relvant as the spread of cancer to the lymph nodes can be an indicator of metatastasis or the stage of the cancer.
 
 ### 04.2.10. Node Cancer
 
-This variable condenses the information from the variable before, classifying as 1, which means Positive, every tumor with regional lymph nodes (N) and as 0, which means Negative, the N0 tumors, so with the data extracted before we can infer that there are 40 negative samples, 40 positive an 3 without clinical data for this variable (the healthy samples).
+This variable condenses the information from the variable before, classifying as 1, which means Positive, every tumor with regional lymph nodes (N) and as 0, which means Negative, the N0 tumors. With the data extracted before, we can infer that there are 40 negative samples, 40 positive, and 3 without clinical data for this variable (the healthy samples).
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Menopausal.group, Node_Cancer) |>
+  group_by(Age.Menopausal.group, 
+           Node_Cancer) |>
   count() 
 ```
 
@@ -344,7 +370,8 @@ In our data, most of the tumors are Stage II according to the AJCC classificatio
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Menopausal.group, AJCC.Simp) |>
+  group_by(Age.Menopausal.group, 
+           AJCC.Simp) |>
   count() 
 ```
 
@@ -363,7 +390,8 @@ Seven patients in this data set died. We can also see the distribution by age:\
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Menopausal.group, Vital.State) |>
+  group_by(Age.Menopausal.group, 
+           Vital.State) |>
   count() 
 ```
 
@@ -373,7 +401,8 @@ It can also be interesting to see the distribution by cancer stage:
 
 ```{r}
 prot_clin_cl |>
-  group_by(AJCC.Simp, Vital.State) |>
+  group_by(AJCC.Simp, 
+           Vital.State) |>
   count()
 ```
 
@@ -382,7 +411,8 @@ Where we can see that most of the deceased patients had a Stage II tumor, which 
 ```{r}
 prot_clin_cl |>
   filter(Vital.State==1) |>
-  group_by(AJCC.Simp, Age.Menopausal.group) |>
+  group_by(AJCC.Simp, 
+           Age.Menopausal.group) |>
   count()
 ```
 
@@ -401,13 +431,14 @@ Luminal B and Luminal A are the most common types of cancer in our data, while H
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Menopausal.group, PAM50.mRNA) |>
+  group_by(Age.Menopausal.group, 
+           PAM50.mRNA) |>
   count()
 ```
 
-Both in the youngest and oldest age groups, the most common type of cancer is Basal-like, one of the most aggressive, but for the middle-aged group the most common is Luminal A, the one generally with the best prognosis.
+Both in the youngest and oldest age groups, the most common type of cancer is Basal-like, which is one of the most aggressive, but for the middle-aged group the most common is Luminal A, the one generally with the best prognosis.
 
-After the analysis of all this variables we can infer that age is an important factor in the development and prognosis of breast cancer, since most of the analyzed variables have a distribution determined by age.
+After the analysis of all this variables, we can infer that age is an important factor in the development and prognosis of breast cancer, since most of the analyzed variables have a distribution determined by age.
 
 ### 04.2.15. Protein expression data
 
@@ -430,6 +461,10 @@ prot_clin_cl |>
   pivot_longer(cols = everything(), 
                names_to = "variable", 
                values_to = "value") |>
-  separate(variable, into = c("Protein", "stat"), sep = "-") |>
-  pivot_wider(names_from = stat, values_from = value)
+  separate(variable, 
+           into = c("Protein", 
+                              "stat"), 
+           sep = "-") |>
+  pivot_wider(names_from = stat, 
+              values_from = value)
 ```

@@ -85,11 +85,11 @@ prot_clin_cl <- prot_clin_cl |>
 
 According to the [WHO](https://www.who.int/news-room/fact-sheets/detail/menopause), most women experience menopause between the ages of 45 and 55 years. To investigate whether there exist some correlation between certain types of cancer and being pre- or post- menopausal we also defined the following categories:
 
-`[30, 45)` Pre-menopausal
+`[30, 45)`: Pre-menopausal
 
-`[45, 55)` Menopausal
+`[45, 55)`: Menopausal
 
-`[55, 90)` Post-menopausal
+`[55, 90)`: Post-menopausal
 
 ```{r}
 prot_clin_cl <- prot_clin_cl %>% 
@@ -221,7 +221,7 @@ prot_clin_cl <- prot_clin_cl |>
 
 ### 03.2.5. Rename and encode Node.Coded column
 
-The Node.Coded column will be renamed to get the name Node_Cancer. Additionally, the values that are coded as "Positive" will receive the value 1, and those coded as "Negative" will receive the value 0. This minor changes are with regards to further Differential Expression Analysis.
+The `Node.Coded` column will be renamed to get the name `Node_Cancer`. Additionally, the values that are coded as "Positive" will receive the value 1, and those coded as "Negative" will receive the value 0. These minor changes are with regard to further Differential Expression Analysis (`07_analysis_3.qmd`).
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
