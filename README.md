@@ -1,5 +1,13 @@
 # group_23_project
 
+## Contributors
+
+-   Ana Pastor Mediavilla (s222761), @AnaPasMed
+-   Amanda Jimenez Lobato (s233150), @AmandaJimLob99
+-   Carlos de Santiago León (s222766), @CarlosSanti00
+-   Laura Figueiredo Tor (s222797), @LFT18
+-   Monika Karolina Borkowska (s223203), @mondaymon
+
 # Analysis of Breast Cancer Proteomes
 
 Final project for the R for Bio-Data Science course (22160) - Group 23
@@ -44,11 +52,3 @@ If you are missing any in your RStudio environment, just install the necessary p
 ## Executing the analysis
 
 The R folder contains all the .qmd scripts created for this project, which break down the analysis into easy-to-follow steps. To execute the entire analysis in one go, please run `00_all.qmd`.
-
-## Contributors
-
--   Ana Pastor Mediavilla, @AnaPasMed
--   Amanda Jimenez Lobato, @AmandaJimLob99
--   Carlos de Santiago León, @CarlosSanti00
--   Laura Figueiredo Tor, @LFT18
--   Monika Karolina Borkowska, @mondaymon
