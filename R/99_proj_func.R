@@ -1,15 +1,21 @@
 volcano_plot <- function(data, condition_test){
   plt <- data |>
     group_by(dif_exp) |>
-    mutate(label = case_when(dif_exp == "Up" ~  paste0(dif_exp, " (Count: ", n(), ")" ),
-                             dif_exp == "Down" ~  paste0(dif_exp, " (Count: ", n(), ")" ),
-                             dif_exp == "NS" ~  paste0(dif_exp))) |>
+    mutate(label = case_when(dif_exp == "Up" ~  str_c(dif_exp,
+                                                      " (Count: ",
+                                                      n(),
+                                                      ")" ),
+                             dif_exp == "Down" ~  str_c(dif_exp,
+                                                        " (Count: ",
+                                                        n(),
+                                                        ")" ),
+                             dif_exp == "NS" ~  str_c(dif_exp))) |>
     ggplot(aes(x = estimate,
                y = -log10(p.value),
                colour = label)) +
     geom_point(alpha = 0.4,
                shape = "circle") +
-    labs(title = paste0("Differentially expressed proteins in the test: ",
+    labs(title = str_c("Differentially expressed proteins in the test: ",
                         condition_test,
                         " vs. Non-",
                         condition_test),
@@ -21,7 +27,7 @@ volcano_plot <- function(data, condition_test){
                                   "grey",
                                   "red")) +
     theme_minimal() +
-    theme(legend.position = "right",
+    theme(legend.position = "bottom",
           plot.title = element_text(hjust = 0.5),
           plot.subtitle = element_text(hjust = 0.5)) 
   return(plt)
@@ -56,7 +62,7 @@ DEA_proteins <- function(data_in, condition_test){
   data_w_model <- data_long_nested |>
     group_by(Protein) |>
     mutate(model_object = map(.x = data,
-                              .f = ~lm(formula = paste0("log2_iTRAQ ~", col_name) ,
+                              .f = ~lm(formula = str_c("log2_iTRAQ ~", col_name) ,
                                        data = .x)))
 
   # Tidy the models using functions from the package broom by creating a
