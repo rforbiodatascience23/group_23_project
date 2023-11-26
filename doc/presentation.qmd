@@ -3,6 +3,7 @@ title: "Final Project: A protein expression analysis of Breast Cancer"
 author: "Group 23"
 format: 
   revealjs: 
+    embed-resources: true
     theme: simple
     auto-stretch: false
     transition: slide
@@ -21,7 +22,6 @@ format:
 editor: visual
 css: style.css
 ---
-
 
 ## Introduction
 
@@ -47,7 +47,7 @@ The analysis of this data set is relevant for multiple potential applications: e
 
 ### Workflow
 
-![](/images/Workflow.png){fig-align="center"}
+![](../doc/images/workflow.png){fig-align="center"}
 
 ## Materials and methods
 
@@ -82,7 +82,6 @@ Description of relevant variables
 ![](../results/normalized_TNBC_across_menopausal.png){.absolute top="70" left="600" height="574" width="550"}
 :::
 :::
-
 
 ## Analysis 1. PCA.
 
@@ -208,7 +207,6 @@ volcano_plot <- function(data, condition_test){
 :::
 :::
 
-
 ## Analysis 3: Differential expression
 
 ::: columns
@@ -221,12 +219,10 @@ volcano_plot <- function(data, condition_test){
 
 ::: fragment
 ::: {style="font-size: 0.5em; text-align: center"}
-::: {.center-xy}
+::: center-xy
 **NP_002094.2:** glycogen \[starch\] synthase, muscle isoform 1
 :::
 :::
 :::
-
 :::
 :::
-
