@@ -699,7 +699,8 @@ pca_PAM50_fit |>
        color = "TNBC") +
   theme_half_open(12) + 
   background_grid() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.background = element_rect(fill = "white")) 
 
 ```
 
@@ -745,7 +746,8 @@ pca_PAM50_fit |>
        color = "Tumor") +
   theme_half_open(12) + 
   background_grid() +
-  theme(plot.title = element_text(hjust = 0.5))
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.background = element_rect(fill = "white"))  
 ```
 
 ```{r}
