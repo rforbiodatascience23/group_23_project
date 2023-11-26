@@ -26,7 +26,7 @@ gene_metadata <- read.delim("../data/01_load_gene_metadata.tsv") |>
 
 ## 04.2. Descriptive statistics
 
-In this segment we will focus in the main characteristics of each attribute, such as number of patients per group, mean median, standard deviation, variance, range, and quantiles.
+In this segment we will focus on the main characteristics of each attribute, such as number of patients per group, mean median, standard deviation, variance, range, and quantiles.
 
 As a remark before starting this analysis and as we mentioned in the cleaning, we kept NAs for the clinical data of the 3 healthy patients, since these samples will be useful for our analysis and we can not drop them, but filling these data with invented or random values would be misleading. Hence, in most of the statistical analysis that follows 3 NA values will appear for the clinical attributes.
 
@@ -36,11 +36,11 @@ As a remark before starting this analysis and as we mentioned in the cleaning, w
 dim(prot_clin_cl)
 ```
 
-The final data set contains 83 observations and 9351 variables.
+The final data set contains 83 observations and 9 351 variables.
 
 ### 04.2.1. Complete TCGA ID
 
-The first column contains the IDs for the 80 patients, 77 with breast cancer and 3 healthy. 3 IDs were repeated, probably because they analysed two different samples from the same patient, so in these three cases the Complete_TCGA_ID is followed by a .1 in the repeated sample. As discussed before, these three samples did not have clinical data, but since they come from the patient with the same repeated Complete_TCGA_ID, we just copied the data into these .1 samples.
+The first column contains the IDs for the 80 patients, 77 with breast cancer and 3 healthy. 3 IDs were duplicated, probably because two different samples from the same patient were analyzed. Thus, in these 3 cases the `Complete_TCGA_ID` is followed by a .1 in the repeated sample. As discussed before, these 3 samples did not have clinical data, but since they come from the patient with the same `Complete_TCGA_ID,` we just copied the corresponding data into the .1 samples.
 
 ### 04.2.2. Gender distribution
 
@@ -51,11 +51,11 @@ prot_clin_cl |>
   count(Gender)
 ```
 
-As expected, the great majority of samples were taken from female patients, since according to the World Health Organization (WHO), only approximately 0.5-1% of breast cancers occur in men (data from the 12th of July 2023). Three of the samples are not classified either as male or female.
+As expected, a great majority of samples was taken from female patients, since according to the World Health Organization (WHO), only approximately 0.5-1% of breast cancers occur in men (data from the 12th of July 2023). 3 of the samples are not classified either as male or female.
 
 ### 04.2.3. Age at initial pathological diagnosis distribution
 
-Previously discussed in the augmentation file for dividing the samples in age ranges, but in this section we will focus more on the mean and other statistically relevant data.
+Age distribution was previously discussed in the `03_augmentation.qmd` file, were samples were grouped into age ranges, but in this section we will focus more on the mean and other statistically relevant data.
 
 ```{r}
 prot_clin_cl |>
@@ -88,7 +88,7 @@ prot_clin_cl %>%
 
 ### 04.2.4. Menopausal age grouping
 
-This type of grouping is a variation of the previous one, in this case taking into account the risk age factors for the different types of breast cancer. Hence, we have a group for "young patients", this is women under the median age of diagnosis for breast cancer, but that are more prompt to develop a TNBC type of tumor. From 45 to 55 years-old we have the age group where breast cancer is normally diagnosed, but they are younger that the median age where menopause starts (55) so these tumors are less prompt to have the hormone receptors. Lastly, we have the group of the older patients which is from 55 up to 90 years-old, where normally women already have the menopause and hence these tumors are more prompt to have hormone receptors.
+This type of grouping is a variation of the previous one, in this case taking into account the risk age factors for the different types of breast cancer. Hence, we have a group for "young patients", this is women under the median age of diagnosis for breast cancer, but that are more prompt to develop a TNBC type of tumor. From 45 to 55 years-old we have the age group where breast cancer is normally diagnosed, but still contains data from patients younger than the median age where menopause starts (55), so these tumors are less prompt to have the hormone receptors. Lastly, we have the group of the older patients from 55 up to 90 years-old, where normally women already have gone through menopause and hence the observed tumors are more prompt to have hormone receptors.
 
 We investigated, whether the increased risk of developing a TNBC tumor at a younger age can be elucidated from our data. For this reason we analyzed the prevalence of TNBC across the three menopausal age groups. To mitigate the impact of one age group's samples dominating the entire data set and being more pronounced than samples belonging to other age groups, we performed normalization before the plotting step.
 
@@ -97,10 +97,12 @@ meno_age_group_members <- prot_clin_cl %>%
   count(Age.Menopausal.group, name = "Total")
 
 meno_age_group_tnbc_positive <- prot_clin_cl %>%
-  filter(TNBC == 'Positive') %>%
+  filter(TNBC == '0') %>%
   count(Age.Menopausal.group, name = "TNBC_Positive")
 
-meno_age_group_data <- left_join(meno_age_group_members, meno_age_group_tnbc_positive, by = "Age.Menopausal.group")
+meno_age_group_data <- left_join(meno_age_group_members, 
+                                 y = meno_age_group_tnbc_positive, 
+                                 by = "Age.Menopausal.group")
 
 meno_age_group_data <- meno_age_group_data %>%
   mutate(Proportion_TNBC_Positive = TNBC_Positive / Total)
@@ -131,9 +133,15 @@ meno_age_group_data %>%
 
 ```
 
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/normalized_TNBC_across_menopausal.png", plot = last_plot(), device = "png")
+```
+
 ### 04.2.5. ER and PR status
 
-These two columns make reference to the presence or absence of receptors that attach to the hormones estrogen and progesterone, and hence the tumorous cells need these hormones for the cells to grow.
+These two columns make reference to the presence or absence of receptors that attach to the hormones estrogen and progesterone, and hence the tumorous cells need these hormones to grow.
 
 -   **ER-positive:** Breast cancers that have estrogen receptors are called ER-positive (or **ER+**) cancers.
 
@@ -146,7 +154,7 @@ prot_clin_cl |>
   count(ER, PR) 
 ```
 
-Out of the 80 samples with this clinical data recorded, 26 patients are negative for both receptors (hormone receptor-negative), 10 patients are positive for the estrogen receptor, and 44 patients are positive for both receptors. In our data there are no samples only positive for the PR receptor.
+Out of the 80 samples with the clinical data recorded, 26 patients are negative for both receptors (hormone receptor-negative), 10 patients are positive for the estrogen receptor, and 44 patients are positive for both receptors. In our data there are no samples only positive for the PR receptor.
 
 We can then investigate how does the ER- and PR- profile look like across different age groups.
 
@@ -161,9 +169,9 @@ prot_clin_cl_er_pr
 ```{r}
 prot_clin_cl_er_pr %>% 
       filter(Age.Ini.Diagnostic.group != 'NA') %>% 
-  ggplot(mapping = aes(x = Age.Ini.Diagnostic.group, 
-           y = n, 
-           fill = interaction(ER, PR))) +
+  ggplot(mapping = aes(x = Age.Ini.Diagnostic.group,
+                       y = n,
+                       fill = interaction(ER, PR))) +
   geom_bar(stat = "identity",
           color = "black", alpha = 0.7) +
   labs(title = "ER and PR Combinations Across Age Groups",
@@ -178,16 +186,22 @@ prot_clin_cl_er_pr %>%
         legend.position = "bottom")
 ```
 
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/ER_PR_across_age_groups.png", plot = last_plot(), device = "png")
+```
+
 ### 04.2.6. HER2 status
 
-According to The American Cancer Society,about 15% to 20% of breast tumors have higher levels of a protein known as HER2 (human epidermal growth factor receptor 2 ). These cancers are called HER2-positive breast cancers and tend to grow and spread faster than breast cancers that are HER2-negative, but are much more likely to respond to treatment with drugs that target the HER2 protein.
+According to The American Cancer Society, about 15% to 20% of breast tumors have higher levels of a protein known as HER2 (human epidermal growth factor receptor 2 ). These cancers are called HER2-positive breast cancers and tend to grow and spread faster than breast cancers that are HER2-negative, but are much more likely to respond to treatment with drugs that target the HER2 protein.
 
 ```{r}
 prot_clin_cl |>
   count(HER2)
 ```
 
-Out of the 80 samples with this clinical data recorded (3 samples have NA values for this attribute), 60 patients are HER-2 negative, 19 HER-2 positive and 1 is equivocal. This "equivocal" corresponds to a result of 2+ in the immunohistochemistry (IHC) test, which is one of the tests used to find out if cancer cells have a high level of the HER2 protein. It means that the HER2 status needs to be tested with fluorescence in situ hybridization **(**FISH) test to clarify the result.
+Out of the 80 samples with this clinical data recorded (3 samples have NA values for this attribute), 60 patients are HER-2 negative, 19 HER-2 positive and 1 is equivocal. The "equivocal" status corresponds to a result of 2+ in the immunohistochemistry (IHC) test, which is one of the tests used to find out if cancer cells have a high level of the HER2 protein. It means that the HER2 status needs to be tested with a fluorescence *in situ* hybridization **(**FISH) test to clarify the result.
 
 ### 04.2.7. Triple-negative breast cancer (TNBC) case count
 
@@ -229,7 +243,7 @@ prot_clin_cl |>
   count(ER_PR_HER2)
 ```
 
-This values follow what was previously discussed: there are 19 TNBC patients, 7 positive for high levels of HER-2, 6 only positive for the estrogen, 35 positive for both hormone receptors, 5 positive for the combination of estrogen receptor and HER2 and 7 patients positive for all three test, besides the patient for which both ER and PR test were positive but the test for the HER2 levels was inconclusive. It is worth highlighting that there are no patients with only progesterone receptors or with a combination of progesterone and high HER-2 levels, hence these progesterone receptors are less common in our data set.
+The values above follow what was previously discussed: there are 19 TNBC patients, 7 positive for high levels of HER-2, 6 only positive for the estrogen, 35 positive for both hormone receptors, 5 positive for the combination of estrogen receptor and HER2, and 7 patients positive for all three test, besides the patient for which both ER and PR test were positive, but the test for the HER2 levels was inconclusive. It is worth highlighting that there are no patients with only progesterone receptors or with a combination of progesterone and high HER-2 levels, hence these progesterone receptors are less common in our data set.
 
 We can also see these types of cancer distributed by age:
 
@@ -239,11 +253,11 @@ prot_clin_cl |>
   count()
 ```
 
-As pointed before, the most common cancer between the younger patients is the type 0 or TNBC, while both in the medium-aged and older groups of patients the most common cancer is type 4 or ER/PR positive.
+As pointed out before, the most common cancer amongst the younger patients is the type 0 or TNBC, while both in the meddle-aged and older groups of patients, the most common cancer is type 4 or ER/PR positive.
 
 ### 04.2.9. Tumor stage distribution
 
-The variable "Tumor" refers a classification from 1 to 4 accounting for the size and location of the tumor. According to the National Cancer Institute (NCI):
+The variable "Tumor" refers to a classification ranging from 1 to 4, accounting for the size and location of the tumor. According to the National Cancer Institute (NCI):
 
 -   The T refers to the size and extent of the main tumor. The main tumor is usually called the primary tumor.
 
@@ -262,13 +276,14 @@ prot_clin_cl |>
   count() 
 ```
 
-When accounting both for the age range and the stage of the tumor, the stage 2 is the most common across most age groups, with the exception of patients between 70 and 80 years-old, where the most common stage is T3. It is also worth mentioning that T4 tumors are rarely diagnosed before 60 years-old, and we can only find T1 and T2 tumors in the youngest rage of patients.
+When accounting for both the age range and the stage of the tumor, the stage 2 is the most common across most age groups, with the exception of patients between 70 and 80 years-old, where the most common stage is T3. It is also worth mentioning that T4 tumors are rarely diagnosed before 60 years-old, and we can only find T1 and T2 tumors in the youngest rage of patients.
 
 ### 04.2.9. Node distribution
 
-The variable "Node" refers to the number of nearby lymph nodes that have cancer. According to the National Cancer Institute:
+The variable "Node" refers to the number of nearby lymph nodes that are affected by cancer. According to the National Cancer Institute:
 
 -   N0: There is no cancer in nearby lymph nodes.
+
 -   N1, N2, N3: Refers to the number and location of lymph nodes that contain cancer. The higher the number after the N, the more lymph nodes that contain cancer.
 
 ```{r}
@@ -278,7 +293,9 @@ prot_clin_cl |>
 
 Most of the patients in our data set do not have cancer in the nearby lymph nodes.
 
+
 ### 04.2.10. Node Cancer
+
 
 This variable condenses the information from the variable before, classifying as 1, which means Positive, every tumor with regional lymph nodes (N) and as 0, which means Negative, the N0 tumors, so with the data extracted before we can infer that there are 40 negative samples, 40 positive an 3 without clinical data for this variable (the healthy samples).
 
@@ -288,11 +305,13 @@ prot_clin_cl |>
   count() 
 ```
 
+
 We can see that the presence of nearby lymph nodes that have cancer does not seem to be dependent on the age, since all three age groups apparently have the same distribution of "Positives" and "Negatives" (1s and 0s) for this variable.
+
 
 ### 04.2.11. Metastasis
 
-The "Metastasis" variable (M) refers to whether the cancer has metastasized. This means that the cancer has spread from the primary tumor to other parts of the body.
+The "Metastasis" variable (M) indicates whether cancer has spread to other parts of the patient's body than its original site.
 
 ```{r}
 prot_clin_cl |>
@@ -303,13 +322,13 @@ Out of the 80 patients with cancer in this data set, only one has metastasis.
 
 ### 04.2.12. AJCC (simplified)
 
-As explained in the augmentation file, this column simplifies the information previously encoded in the "AJCC.Stage" and "Converted.Stage" columns.
+As explained in the augmentation file, this column simplifies the information previously encoded in the `AJCC.Stage` and `Converted.Stage` columns.
 
-The American Joint Committee on Cancer (AJCC) for breast cancer is a staging system for classifying the extent of a cancer based on the size of the tumor (T), lymph node involvement (N), and the presence or absence of metastasis (M). The most recent update to the staging system integrates molecular markers with disease extent for more optimal estimation of prognosis.
+The American Joint Committee on Cancer (AJCC) for breast cancer is a staging system for classifying the extent of a cancer, based on the size of the tumor (T), lymph node involvement (N), and the presence or absence of metastasis (M). The most recent update to the staging system integrates molecular markers with disease extent for more optimal estimation of prognosis.
 
-Stages 1-4 are described with the Roman numerals I, II, III, and IV. Sometimes stages are further subdivided using the letters A, B and C that indicate certain characteristics found on work-up of the cancer.
+Stages 1-4 are described with the Roman numerals I, II, III, and IV. Sometimes these stages are further subdivided using the letters A, B and C that indicate certain characteristics found on work-up of the cancer.
 
--   **Stage 0** -- This is precancerous and non-invasive. This is also known as "carcinoma in situ", or cancer that is only present in the cells where it started. It has not spread to any nearby tissues.
+-   **Stage 0** -- This is precancerous and non-invasive. This is also known as "carcinoma *in situ*", or cancer that is only present in the cells where it started. It has not spread to any nearby tissues.
 
 -   **Stage I** -- The tumor is usually small and has just begun growing into nearby tissues, but its invasion does not have much depth. Stage 1 tumors have not spread to nearby lymph nodes or major organs.
 
@@ -324,7 +343,7 @@ prot_clin_cl |>
   count(AJCC.Simp)
 ```
 
-In our data, most of the tumors are stage II according to the AJCC classification, followed by stage III, I and finally IV with only one case. If we observe the distribution by age:
+In our data, most of the tumors are Stage II according to the AJCC classification, followed by Stage III, I and finally IV with only one case. If we observe the distribution by age:
 
 ```{r}
 prot_clin_cl |>
@@ -332,7 +351,7 @@ prot_clin_cl |>
   count() 
 ```
 
-In this table we can observe that the group were stage 3 is more present and where the only case of stage 4 is located is in the oldest age group.
+In this table we can see that it is the oldest age group, where Stage III is found to be the most prevalent and where the only case of Stage IV cancer is observed.
 
 ### 04.2.13. Vital state distribution
 
@@ -361,7 +380,7 @@ prot_clin_cl |>
   count()
 ```
 
-Where we can see that most of the deceased patients had a stage II tumor, which should not be the case for stage II tumors with early treatment. If we combine both age and stage to see the distribution of deceased, we get:
+Where we can see that most of the deceased patients had a Stage II tumor, which should not be the case for stage II tumors with early treatment. If we combine both age and stage to see the distribution of deceased, we get:
 
 ```{r}
 prot_clin_cl |>
@@ -370,7 +389,7 @@ prot_clin_cl |>
   count()
 ```
 
-We can see that most of the stage II deceased patients are in the oldest age group, which indicates that age is also an important factor in the 7 registered deaths.
+We can see that most of the Stage II deceased patients are in the oldest age group, which indicates that age is also an important factor in the 7 registered deaths.
 
 ### 04.2.14. PAM50.mRNA distribution
 
@@ -381,7 +400,7 @@ prot_clin_cl |>
   count(PAM50.mRNA)
 ```
 
-Luminal B and Luminal A are the most common type of cancers in our data, while HER2-enriched and Basal-like, the most aggressive ones, are less common.
+Luminal B and Luminal A are the most common types of cancer in our data, while HER2-enriched and Basal-like, are slightly less common.
 
 ```{r}
 prot_clin_cl |>
@@ -389,13 +408,13 @@ prot_clin_cl |>
   count()
 ```
 
-Both in the youngest and oldest age groups the most common type of cancer is Basal-like, one of the most aggressive, but for the middle-aged group the most common is Luminal A, the one generally with the best prognosis.
+Both in the youngest and oldest age groups, the most common type of cancer is Basal-like, one of the most aggressive, but for the middle-aged group the most common is Luminal A, the one generally with the best prognosis.
 
-After the analysis of all this variables we can infer that age is an important factor in the development and prognosis of the breast cancer, since most of the analysed variables have distribution determined by age.
+After the analysis of all this variables we can infer that age is an important factor in the development and prognosis of breast cancer, since most of the analyzed variables have a distribution determined by age.
 
 ### 04.2.15. Protein expression data
 
-The remaining columns contain protein expression data. They contain expression values for \~12.000 proteins for each sample, with missing values removed.
+The remaining columns contain protein expression data. They contain expression values for \~12 000 proteins for each sample, with missing values removed.
 
 Log2 iTRAQ ratios were used to represent the relative abundance of proteins in the samples. iTRAQ (Isotope-Tagged Retention And Capture) is a quantitative proteomics technique that measures the abundance of proteins in a sample. Then, log2 iTRAQ ratios were calculated by taking the logarithm base 2 of the ratio between the heavy and light isotope pairs.
 
@@ -404,11 +423,14 @@ The code below provides the mean and the standard deviation of each of the prote
 ```{r}
 prot_clin_cl |>
   select(starts_with("NP")) |>
-  summarize(across(everything(), list(
-    mean = mean, 
-    sd = sd), 
-    .names = "{col}-{fn}")) |>
-  pivot_longer(cols = everything(), names_to = "variable", values_to = "value") |>
+  summarize(across(everything(), 
+                   list(
+                     mean = mean, 
+                     sd = sd),
+                   .names = "{col}-{fn}")) |>
+  pivot_longer(cols = everything(), 
+               names_to = "variable", 
+               values_to = "value") |>
   separate(variable, into = c("Protein", "stat"), sep = "-") |>
   pivot_wider(names_from = stat, values_from = value)
 ```

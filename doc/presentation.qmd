@@ -1,5 +1,5 @@
 ---
-title: "Group23 Final Project Presentation"
+title: "Final Project: A protein expression analysis of Breast Cancer"
 author: "Group_23"
 format: 
   revealjs: 
@@ -10,20 +10,57 @@ editor: visual
 css: style.css
 ---
 
-```{css}
-<style> .source-code { font-size: 2px; }</style>
-```
+## Introduction
 
-## Quarto
+::: {style="font-size: 0.8em; text-align: left"}
+The data set consists of:
 
-Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto presentations see <https://quarto.org/docs/presentations/>.
+-   iTRAQ proteome profiling of 77 breast cancer samples + 3 healthy samples, with expression values for \~12.000 proteins for each sample.
 
-## Bullets
+-   A file containing the clinical data of the 77 breast cancer patients (TCGA ID, sex, age, tumor receptors, etc.).
 
-When you click the **Render** button a document will be generated that includes:
+-   A file containing the list of genes and proteins used by the PAM50 classification system.
 
--   Content authored with markdown
--   Output from executable code
+The analysis of this data set is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.
+:::
+
+## Materials and methods
+
+### Workflow
+
+![](../doc/images/Workflow.png){fig-align="center"}
+
+## Materials and methods
+
+### Description of relevant variables
+
+::: {style="font-size: 0.7em; text-align: left"}
+-   Dropped variables (redundant or not relevant): Survival.Data.Form, Days.to.date.of.Death, Days.to.Date.of.Last.Contact, OS.Time, Vital.Status, Tumor..T1.Coded, Metastasis.Coded, AJCC.Stage, Converted.Stage and all the columns destined to cluster the data
+
+-   Created variables:
+
+    -   Age.Ini.Diagnostic.group: intervals of 10 years starting from 30 and going up until 90.
+
+    -   Age.Menopausal.group: `[30, 45)` Pre-menopausal, `[45, 55)` Menopausal, `[55, 90)` Post-menopausal.
+
+    -   ER_PR_HER2: level from 0 to 7 depending on hormonal receptors (ER, PR) present an the level of HER2.
+
+    -   TNBC: 0 if positive, 1 if negative
+
+    -   AJCC.Simp: simplified AJCC stages (I, II, III, and IV)
+:::
+
+## Materials and methods
+
+### Description of relevant variables
+
+::: columns
+::: {.column width="60%"}
+![](../results/ER_PR_across_age_groups.png){fig-align="right" width="50%"}
+
+![](../results/normalized_TNBC_across_menopausal.png){fig-align="right" width="50%"}
+:::
+:::
 
 ## Code
 
@@ -77,5 +114,21 @@ PAM50_cluster_data |>
 
 ::: {.column width="60%"}
 ![](../results/Kmeans_PAM50_clusters.png){fig-align="right" width="50%"}
+:::
+:::
+
+## Analysis 1. PCA.
+
+::: columns
+::: {.column width="50%"}
+::: fragment
+![](../results/PCA_TNBC_PAM50_clinical.png){.absolute top="70" height="574" width="550"}
+:::
+:::
+
+::: {.column width="50%"}
+::: fragment
+![](../results/PCA_Csubtype_PAM50_clinical.png){.absolute top="70" left="600" height="574" width="550"}
+:::
 :::
 :::
