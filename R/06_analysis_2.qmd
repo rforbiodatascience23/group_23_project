@@ -125,7 +125,8 @@ After checking this, we can continue by defining a number of 5 clusters to see i
 ```{r}
 # Perform k-means clustering
 kmeans_PAM50_5 <- PAM50_data |>
-  kmeans(centers = 5, iter.max = 10)
+  kmeans(centers = 5, 
+         iter.max = 10)
 
 # New tibble with the cluster results
 PAM50_cluster_data <- PAM50_data |>
