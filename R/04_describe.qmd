@@ -113,7 +113,7 @@ meno_age_group_data
 
 ```{r}
 meno_age_group_data %>%
-  filter(Age.Menopausal.group != 'NA') %>%
+  filter(!is.na(Age.Menopausal.group)) %>%
   ggplot(mapping = aes(x = Age.Menopausal.group, 
                        y = Proportion_TNBC_Positive, 
                        fill = Age.Menopausal.group)) +
@@ -137,7 +137,7 @@ meno_age_group_data %>%
 ```{r}
 #| eval: true
 #| echo: false
-ggsave("../results/normalized_TNBC_across_menopausal.png", plot = last_plot(), device = "png")
+ggsave("../results/normalized_TNBC_across_menopausal.png", plot = last_plot(), device = "png", bg="white")
 ```
 
 ### 04.2.5. ER and PR status
@@ -190,7 +190,7 @@ prot_clin_cl_er_pr %>%
 ```{r}
 #| eval: true
 #| echo: false
-ggsave("../results/ER_PR_across_age_groups.png", plot = last_plot(), device = "png")
+ggsave("../results/ER_PR_across_age_groups.png", plot = last_plot(), device = "png", bg="white")
 ```
 
 ### 04.2.6. HER2 status
@@ -294,9 +294,7 @@ prot_clin_cl |>
 
 Most of the patients in our data set do not have cancer in the nearby lymph nodes.
 
-
 ### 04.2.10. Node Cancer
-
 
 This variable condenses the information from the variable before, classifying as 1, which means Positive, every tumor with regional lymph nodes (N) and as 0, which means Negative, the N0 tumors, so with the data extracted before we can infer that there are 40 negative samples, 40 positive an 3 without clinical data for this variable (the healthy samples).
 
@@ -306,9 +304,7 @@ prot_clin_cl |>
   count() 
 ```
 
-
 We can see that the presence of nearby lymph nodes that have cancer does not seem to be dependent on the age, since all three age groups apparently have the same distribution of "Positives" and "Negatives" (1s and 0s) for this variable.
-
 
 ### 04.2.11. Metastasis
 
@@ -423,7 +419,9 @@ The code below provides the mean and the standard deviation of each of the prote
 
 ```{r}
 prot_clin_cl |>
-  select(starts_with("NP")) |>
+  select(starts_with("NP"),
+         starts_with("XP"),
+         starts_with("YP")) |>
   summarize(across(everything(), 
                    list(
                      mean = mean, 

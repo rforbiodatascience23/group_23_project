@@ -86,7 +86,7 @@ DEA_TNBC |>
 ```{r}
 #| eval: true
 #| echo: false
-ggsave("../results/TNBC_vs_Non_TNBC.png", plot = last_plot(), device = "png",bg="white")
+ggsave("../results/TNBC_vs_Non_TNBC.png", plot = last_plot(), device = "png", bg="white")
 ```
 
 Now, get a tibble with all the differentially expressed proteins (Up or Down) for further comparison.
