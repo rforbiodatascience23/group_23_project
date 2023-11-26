@@ -26,6 +26,8 @@ The analysis of this data set is relevant for multiple potential applications: e
 
 ### Workflow
 
+![](../doc/images/Workflow.png){fig-align="center"}
+
 ## Materials and methods
 
 ### Description of relevant variables
@@ -49,13 +51,11 @@ The analysis of this data set is relevant for multiple potential applications: e
 ### Description of relevant variables
 
 ::: columns
-
 ::: {.column width="60%"}
 ![](../results/ER_PR_across_age_groups.png){fig-align="right" width="50%"}
 
 ![](../results/normalized_TNBC_across_menopausal.png){fig-align="right" width="50%"}
 :::
-
 :::
 
 ## Code
