@@ -12,6 +12,7 @@ editor: visual
 ```{r}
 #| eval: true 
 #| message: false
+#| warning: false
 library("tidyverse")
 ```
 
