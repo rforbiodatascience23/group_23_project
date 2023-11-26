@@ -17,6 +17,18 @@ library(broom)
 library(cowplot)
 ```
 
+In this section, we use Principal Components Analysis (PCA) as a way to inspect the data and try to unveil underlying patterns. We color code according to different variables to whether a possible clustering observed in the two first principal components aligns with a particular variable.
+
+In particular, we conduct 4 different analysis:
+
+1.  Considering all proteomic data for all individuals, but excluding clinical data.
+
+2.  Considering the proteomic data for the PAM50 proteins for all individuals, but excluding clinical data.
+
+3.  Considering all the protemic data and the clinical data for the individuals with cancer (we exclude the healthy because they lack clinical data).
+
+4.  Considering the proteomic data for the PAM50 proteins and the clinical data only for the individuals with cancer (as the healthy ones lack clinical data).
+
 ## 05.1. Load data from .tsv files
 
 ```{r}
@@ -25,7 +37,7 @@ prot_clin <- read.delim("../data/03_dat_aug.tsv")
 
 ## 05.2. PCA for all individuals based on all proteomic data.
 
-In our initial analysis, we will examine the proteomic data across all samples, taking into account both cancerous and healthy individuals. Our aim is to analyze if differences in the proteomes allow to see differences individuals.
+In our initial analysis, we examine the proteomic data across all samples, taking into account both cancerous and healthy individuals. Our aim is to analyze if differences in the proteomes allow to see differences individuals.
 
 Hence, in this first analysis we do not use the clinical data. First, we get a subset only with the proteomic data. All of the values are numeric, so the `prcomp()` function can work with them without further processing.
 
@@ -44,7 +56,58 @@ pca_prot_fit <- proteomes |>
   prcomp(scale=FALSE)
 ```
 
-Since we want to analyze possible differences between cancer patients and healthy individuals, we create new variables for differentiating them. For a deeper analysis, in one varaible we will group the individuals with cancer according to the type of tumor they have, and in the other variable according to the AJCC stage.
+First, we plot the data on the two first principal components.
+
+```{r}
+pca_scores <- as.data.frame(predict(pca_prot_fit))
+
+ggplot(pca_scores, aes(PC1, PC2)) + 
+  geom_point(size = 1.5, color = "cornflowerblue") +
+  labs(title = "PCA scores, proteomic data, all individuals",
+       x = "PC1", 
+       y = "PC2") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Before proceeding with any further analysis, we can inspect the amount of variance explained by the first principal components.
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "eigenvalues")
+```
+
+When calculating the variance explained, we can see that the two first principal components only account for 22% of the total variation. This may be one of the reasons why, in the further analysis we don't see a clear clustering of the samples when plotting the PCA results on PC1 and PC2. In fact, the first 10 principal components are necessary to reach 50% of the variation.
+
+```{r}
+pca_prot_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, 
+             percent)) +
+  geom_col(fill = "cornflowerblue", 
+           alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 
+                                  80, 
+                                  by = 5)) +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = expansion(mult = c(0, 
+                                                 0.01))) +
+  geom_text(mapping = aes(label = ifelse(PC %in% c(1, 2), 
+                                         scales::percent(percent), 
+                                         "")),
+            position = position_stack(vjust = 1.05), 
+            color = "black", 
+            size = 2) +
+  theme_minimal_hgrid(12) +
+  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+       x = "Principal Component (PC)",
+       y = "Percentage of variance explained (%)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+Since we want to analyze possible differences between cancer patients and healthy individuals, we create new variables for differentiating them. For a deeper analysis, in one variable, we will group the individuals with cancer according to the type of tumor they have, and in the other variable according to the AJCC stage.
 
 ```{r}
 prot_clin_exp <- prot_clin |>
@@ -75,9 +138,7 @@ prot_clin_exp <- prot_clin_exp |>
   relocate(Cancer_AJCC, .after = AJCC.Simp)
 ```
 
-#### 05.2.1. PCA on proteomic data.
-
-We can plot the data on the first two principal components, and color according to tumor.
+We can plot the data on the first two principal components, and color according to tumor. However, it is not possible to appreciate any clustering by type of tumor.
 
 ```{r}
 pca_prot_fit |>
@@ -85,16 +146,23 @@ pca_prot_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_tumor)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c(T1 = "mediumorchid3",
-               T2 = "springgreen4",
-               T3 = "coral",
-               T4 = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+    values = c(T1 = "green",
+               T2 = "purple",
+               T3 = "orange",
+               T4 = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. Protemoic data, all individuals",
+       x = "Fitted PC1 (13.198 %)", 
+       y = "Fitted PC2 (8.781 %)",
+       color = "Tumor type") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+  
+
 ```
 
-We can also color according to the AJCC stage.
+We can also color according to the AJCC stage, but the results are not better.
 
 ```{r}
 pca_prot_fit |>
@@ -102,45 +170,25 @@ pca_prot_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_AJCC)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c("Stage I" = "mediumorchid3",
-               "Stage II" = "springgreen4",
-               "Stage III" = "coral",
-               "Stage IV" = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+    values = c("Stage I" = "green",
+               "Stage II" = "purple",
+               "Stage III" = "orange",
+               "Stage IV" = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. Protemoic data, all individuals",
+       x = "Fitted PC1 (13.198 %)", 
+       y = "Fitted PC2 (8.781 %)",
+       color = "AJCC Stage") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Now we look at the data in the PC coordinates. We plot the rotation matrix. Think if we want to analyze this or if it is not informative in this case.
-
-```{r}
-pca_prot_fit |>
-  tidy(matrix = "rotation")
-```
-
-When calculating the variance explain, we can see that the two first principal components only account for 22% of the total variation. This may be one of the reasons why we don't see a clear clustering of the samples when plotting the PCA results on PC1 and PC2. In fact, the first 10 principal components are necessary to reach 50% of the variation.
-
-```{r}
-pca_prot_fit |>
-  tidy(matrix = "eigenvalues")
-```
-
-```{r}
-pca_prot_fit |>
-  tidy(matrix = "eigenvalues") |>
-  ggplot(aes(PC, percent)) +
-  geom_col(fill = "#56B4E9", alpha = 0.8) +
-  scale_x_continuous(breaks = 1:9) +
-  scale_y_continuous(
-    labels = scales::percent_format(),
-    expand = expansion(mult = c(0, 0.01))
-  ) +
-  theme_minimal_hgrid(12)
-```
+Thus, at first sight (when plotting on the two first principal components). it is not possible to establish any type of clustering regarding tumor type or AJCC stages when considering all proteomic data for all individuals. However, this results are not conclusive, as the two first principal components only account for 22% of the variation of the data.
 
 ## 05.3. PCA for all individuals based on PAM50 proteomic data.
 
-We decided to do an analysis for a subset of selected proteins: those indicated in the PAM50 dataset, known to be related to breast cancer.
+We decided to do an analysis for a subset of selected proteins: those indicated in the PAM50 data set, known to be related to breast cancer.
 
 ```{r}
 # Read PAM50 metadata file
@@ -163,7 +211,57 @@ pca_PAM50_fit <- PAM50_data |>
   prcomp(scale=FALSE)
 ```
 
-In this case, we will also color by subtype of cancer (Basal-like, luminal A, Luminal B, or HER2- enriched).
+When can plot the data on the two first principal components.
+
+```{r}
+pca_scores <- as.data.frame(predict(pca_PAM50_fit))
+
+ggplot(pca_scores, aes(PC1, PC2)) + 
+  geom_point(size = 1.5, color = "cornflowerblue") +
+  labs(title = "PCA scores, proteomic data, all individuals",
+       x = "PC1", 
+       y = "PC2") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+In this case, the variance explained is much higher. By selecting proteins that are known to be related to cancer, the amount of variance explained by the first principal components increases considerably. Limiting the columns to data from the PAM50 proteins, PC1 accounts for 39.54% of the variance (compared to 13.2% when using all proteins), and the two first principal components explain more than 50% of the total variance (54,1 %). Moreover, the 10 first principal components account for 88.7% of the variance.
+
+```{r}
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues")
+```
+
+```{r}
+
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, 
+             percent)) +
+  geom_col(fill = "cornflowerblue", 
+           alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 
+                                  30, 
+                                  by = 5)) +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = expansion(mult = c(0, 
+                                                 0.01))) +
+  geom_text(mapping = aes(label = ifelse(PC %in% c(1, 2), 
+                                         scales::percent(percent), 
+                                         "")),
+            position = position_stack(vjust = 1.05), 
+            color = "black", 
+            size = 2) +
+  theme_minimal_hgrid(12) +
+  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+       x = "Principal Component (PC)",
+       y = "Percentage of variance explained (%)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+```
+
+Since the variance explained is much higher in this case, it can be interesting to examine more variables. We can color by type of tumor, AJCC stage, and also subtype of cancer (Basal-like, Luminal A, Luminal B, or HER2- enriched) and TNBC. First, we create new variables to allow for color coding.
 
 ```{r}
 prot_clin_exp <- prot_clin_exp |>
@@ -179,7 +277,19 @@ prot_clin_exp <- prot_clin_exp |>
   relocate(Cancer_subtype, .after = PAM50.mRNA)
 ```
 
-We plot the results on the two first principal components, and we color by type of tumor.
+```{r}
+prot_clin_exp <- prot_clin_exp |>
+  mutate(
+    TNBC_status = case_when(
+      row_number() > n() - 3 ~ "Healthy",
+      TNBC == "0" ~ "Positive",
+      TNBC == "1" ~ "Negative",
+    )
+  ) |>
+  relocate(TNBC_status, .after = TNBC)
+```
+
+Now, we can plot the results.
 
 ```{r}
 pca_PAM50_fit |>
@@ -187,70 +297,79 @@ pca_PAM50_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_tumor)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c(T1 = "mediumorchid3",
-               T2 = "springgreen4",
-               T3 = "coral",
-               T4 = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+    values = c(T1 = "green",
+               T2 = "purple",
+               T3 = "orange",
+               T4 = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+       x = "Fitted PC1 (39.538 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "Tumor type") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-If we color by AJCC stage, we get the following result.
-
 ```{r}
-
 pca_PAM50_fit |>
   augment(prot_clin_exp) |> 
   ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_AJCC)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c("Stage I" = "mediumorchid3",
-               "Stage II" = "springgreen4",
-               "Stage III" = "coral",
-               "Stage IV" = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+    values = c("Stage I" = "green",
+               "Stage II" = "purple",
+               "Stage III" = "orange",
+               "Stage IV" = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+       x = "Fitted PC1 (33.238 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "AJCC Stage") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Finally, we color by tumor subtype.
-
 ```{r}
-pca_prot_fit |>
+pca_PAM50_fit |>
   augment(prot_clin_exp) |> 
   ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_subtype)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c("Basal-like" = "mediumorchid3",
-               "Luminal A" = "springgreen4",
-               "Luminal B" = "coral",
-               "HER2-enriched" = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+    values = c("Basal-like" = "red",
+               "Luminal A" = "green",
+               "Luminal B" = "orange",
+               "HER2-enriched" = "purple",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+       x = "Fitted PC1 (39.238 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "Cancer subtype") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
-
-By selecting proteins that are known to be related to cancer, the amount of variant explained by the first principal components increases considerably. Limiting the columns to data from the PAM50 proteins, PC1 accounts for 39.54% of the variance (compared to 13.2% when using all proteins), and the two first principal components explain more than 50% of the total variance (54,1 %). Moreover, the 10 first principal components account for 88.7% of the variance.
 
 ```{r}
 pca_PAM50_fit |>
-  tidy(matrix = "eigenvalues")
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC_status)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Negative" = "purple",
+               "Positive" = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+       x = "Fitted PC1 (33.238 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "AJCC Stage") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-```{r}
-
-pca_PAM50_fit |>
-  tidy(matrix = "eigenvalues") |>
-  ggplot(aes(PC, percent)) +
-  geom_col(fill = "#56B4E9", alpha = 0.8) +
-  scale_x_continuous(breaks = 1:30) +
-  scale_y_continuous(
-    labels = scales::percent_format(),
-    expand = expansion(mult = c(0, 0.01))
-  ) +
-  theme_minimal_hgrid(12)
-```
+When using only the PAM50 proteins, the results are much better. The amount of variance explained is much higher, and that allows us to visualize possible clusters regarding cancer type and presence or absence of TNBC.
 
 ## 05.4. PCA for cancer samples including clinical data and all proteomic data.
 
@@ -296,119 +415,27 @@ prot_clin_cancer_encoded <- prot_clin_cancer |>
 
 After these transformations, the data is ready for PCA analysis.
 
-**Questions**:
-
--   Should we use 1-hot encoding for PAM50.mRNA?
-
--   Should we use 1-hot encoding for ER_PR_HER2, or just drop it?
-
--   Should we drop Node.Coded?
-
 ```{r}
 pca_prot_fit <- prot_clin_cancer_encoded |>
   prcomp(scale=FALSE)
 ```
 
-We plot the results on the two first principal components, and color according to tumor type.
+Following the previous procedure, we first plot the data on the two first principal components.
 
 ```{r}
-pca_prot_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = Tumor)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c(T1 = "mediumorchid3",
-               T2 = "springgreen4",
-               T3 = "coral",
-               T4 = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+pca_scores <- as.data.frame(predict(pca_prot_fit))
+
+ggplot(pca_scores, aes(PC1, PC2)) + 
+  geom_point(size = 1.5, color = "cornflowerblue") +
+  labs(title = "PCA scores. All proteomic and clinical data, cancer individuals",
+       x = "PC1", 
+       y = "PC2") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-Now we color by AJCC stage.
-
-```{r}
-pca_prot_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = AJCC.Simp)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("Stage I" = "mediumorchid3",
-               "Stage II" = "springgreen4",
-               "Stage III" = "coral",
-               "Stage IV" = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
-```
-
-Color by TNBC
-
-```{r}
-pca_prot_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("Positive" = "red1",
-               "Negative" = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
-```
-
-Color by age
-
-```{r}
-pca_prot_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = Age.Menopausal.group)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("[30, 45)" = "mediumorchid3",
-               "[45, 55)" = "springgreen4",
-               "[55, 90)" = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
-```
-
-Color by subtype of cancer
-
-```{r}
-pca_prot_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = PAM50.mRNA)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("Basal-like" = "mediumorchid3",
-               "Luminal A" = "springgreen4",
-               "Luminal B" ="red1",
-               "HER2-enriched" = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
-```
-
-ER_PR_HER2
-
-```{r}
-pca_prot_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = ER_PR_HER2)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("1" = "mediumorchid3",
-               "2" = "springgreen4",
-               "0" ="red1",
-               "3" = "#0072B2",
-               "4" = "coral",
-               "5" = "turquoise3",
-               "6" = "gold3",
-               "7" = "deeppink")
-            ) +
-  theme_half_open(12) + background_grid()
-```
-
-When adding the clinical data, the variance explained is very similar to the values obtained when using all the proteomic data on all samples.
+Since we are taking into account all protemic data, we see a similar situation to 05.02. The variance explained by the two first principal components is very low. The values are very similar to the previous case, with PC1 accounting for 12.69 % of the variance, and PC2 for 21.45%. As before, the ten first principal components are needed to reach 50%.
 
 ```{r}
 pca_prot_fit |>
@@ -418,15 +445,137 @@ pca_prot_fit |>
 ```{r}
 pca_prot_fit |>
   tidy(matrix = "eigenvalues") |>
-  ggplot(aes(PC, percent)) +
-  geom_col(fill = "#56B4E9", alpha = 0.8) +
-  scale_x_continuous(breaks = 1:9) +
-  scale_y_continuous(
-    labels = scales::percent_format(),
-    expand = expansion(mult = c(0, 0.01))
-  ) +
-  theme_minimal_hgrid(12)
+  ggplot(aes(PC, 
+             percent)) +
+  geom_col(fill = "cornflowerblue", 
+           alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 
+                                  80, 
+                                  by = 5)) +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = expansion(mult = c(0, 
+                                                 0.01))) +
+  geom_text(mapping = aes(label = ifelse(PC %in% c(1, 2), 
+                                         scales::percent(percent), 
+                                         "")),
+            position = position_stack(vjust = 1.05), 
+            color = "black", 
+            size = 2) +
+  theme_minimal_hgrid(12) +
+  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+       x = "Principal Component (PC)",
+       y = "Percentage of variance explained (%)") +
+  theme(plot.title = element_text(hjust = 0.5))
+
 ```
+
+As done previously, in order to look for possible clusterings regarding certain variables, we plot the data on PC1 and PC2, and color regarding different variables. Since now we have included the clinical data, we explore more variables than before: tumor type, AJCC stage, age group, cancer subtype.
+
+First, we make sure to drop the healthy individuals in all data structures used.
+
+```{r}
+prot_clin_exp <- prot_clin_exp |>
+  filter(row_number() <= (n() - 3))
+```
+
+Now, we can inspect different variables.
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_tumor)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(T1 = "green",
+               T2 = "purple",
+               T3 = "orange",
+               T4 = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (12.691 %)", 
+       y = "Fitted PC2 (8.757 %)",
+       color = "Tumor type") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = AJCC.Simp)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Stage I" = "green",
+               "Stage II" = "purple",
+               "Stage III" = "orange",
+               "Stage IV" = "red",
+               Healthy = "blue")) +
+  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (12.691 %)", 
+       y = "Fitted PC2 (8.757 %)",
+       color = "AJCC stage") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC_status)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Positive" = "red",
+               "Negative" = "blue")) +
+  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (12.691 %)", 
+       y = "Fitted PC2 (8.757 %)",
+       color = "TNBC") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Age.Menopausal.group)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("[30, 45)" = "blue",
+               "[45, 55)" = "green",
+               "[55, 90)" = "red")
+  ) +
+  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (12.691 %)", 
+       y = "Fitted PC2 (8.557 %)",
+       color = "Age group") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+pca_prot_fit |>
+  augment(prot_clin_cancer) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = PAM50.mRNA)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c("Basal-like" = "red",
+               "Luminal A" = "green",
+               "Luminal B" ="orange",
+               "HER2-enriched" = "purple")) +
+  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (12.691 %)", 
+       y = "Fitted PC2 (8.557 %)",
+       color = "Cancer subtype") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+After this analysis, it can be concluded that the addition of the clinical data does not significantly change the results when considering all proteomic data: the variance explained continues being too low for us to be able to exctract any meaningful conclusion just by looking at the two first principal components.
 
 ## 05.4. PCA for cancer samples including clinical data and PAM50 proteomic data.
 
@@ -444,24 +593,75 @@ pca_PAM50_fit <- PFAM_prot_cli |>
   prcomp(scale=FALSE)
 ```
 
-We plot the results on the two first principal components, and color according to tumor type.
+We plot the data on the two first principal components.
+
+```{r}
+pca_scores <- as.data.frame(predict(pca_PAM50_fit))
+
+ggplot(pca_scores, aes(PC1, PC2)) + 
+  geom_point(size = 1.5, color = "cornflowerblue") +
+  labs(title = "PCA scores. PAM50 proteomic and clinical data, cancer individuals",
+       x = "PC1", 
+       y = "PC2") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+After dropping the proteins not included in the PAM50 data set, the variance explained increases, as was observed in previous sections. PC1 explains 39.54% of the variance, while PC2 accounts for 14.59% of the variance.
 
 ```{r}
 pca_PAM50_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = Tumor)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c(T1 = "mediumorchid3",
-               T2 = "springgreen4",
-               T3 = "coral",
-               T4 = "red1",
-               Healthy = "#0072B2")
-  ) +
-  theme_half_open(12) + background_grid()
+  tidy(matrix = "eigenvalues")
 ```
 
-AJCC stage
+```{r}
+pca_PAM50_fit |>
+  tidy(matrix = "eigenvalues") |>
+  ggplot(aes(PC, 
+             percent)) +
+  geom_col(fill = "cornflowerblue", 
+           alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 
+                                  30, 
+                                  by = 5)) +
+  scale_y_continuous(labels = scales::percent_format(),
+                     expand = expansion(mult = c(0, 
+                                                 0.01))) +
+  geom_text(mapping = aes(label = ifelse(PC %in% c(1, 2), 
+                                         scales::percent(percent), 
+                                         "")),
+            position = position_stack(vjust = 1.05), 
+            color = "black", 
+            size = 2) +
+  theme_minimal_hgrid(12) +
+  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+       x = "Principal Component (PC)",
+       y = "Percentage of variance explained (%)") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+
+Now, we can do the usual exploratory analysis considering the same variables as in the previous section.
+
+```{r}
+pca_PAM50_fit |>
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = Cancer_tumor)) + 
+  geom_point(size = 1.5) +
+  scale_color_manual(
+    values = c(T1 = "green",
+               T2 = "purple",
+               T3 = "blue",
+               T4 = "red"
+               )) +
+  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (39.538 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "Tumor") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
 ```{r}
 pca_PAM50_fit |>
@@ -469,27 +669,37 @@ pca_PAM50_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = AJCC.Simp)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c("Stage I" = "mediumorchid3",
-               "Stage II" = "springgreen4",
-               "Stage III" = "coral",
-               "Stage IV" = "red1",
-               Healthy = "#0072B2")
+    values = c("Stage I" = "green",
+               "Stage II" = "purple",
+               "Stage III" = "orange",
+               "Stage IV" = "red",
+               Healthy = "blue")
   ) +
-  theme_half_open(12) + background_grid()
+  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (39.538 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "AJCC Stage") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
-
-TNBC
 
 ```{r}
 pca_PAM50_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC)) + 
+  augment(prot_clin_exp) |> 
+  ggplot(aes(.fittedPC1, .fittedPC2, color = TNBC_status)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
     values = c("Positive" = "red1",
-               "Negative" = "#0072B2")
+               "Negative" = "blue")
   ) +
-  theme_half_open(12) + background_grid()
+  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (39.538 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "Tumor") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
 Age
@@ -500,14 +710,18 @@ pca_PAM50_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = Age.Menopausal.group)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c("[30, 45)" = "mediumorchid3",
-               "[45, 55)" = "springgreen4",
-               "[55, 90)" = "#0072B2")
+    values = c("[30, 45)" = "blue",
+               "[45, 55)" = "green",
+               "[55, 90)" = "red")
   ) +
-  theme_half_open(12) + background_grid()
+  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (39.538 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "Tumor") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
-
-Subtype of cancer
 
 ```{r}
 pca_PAM50_fit |>
@@ -515,50 +729,18 @@ pca_PAM50_fit |>
   ggplot(aes(.fittedPC1, .fittedPC2, color = PAM50.mRNA)) + 
   geom_point(size = 1.5) +
   scale_color_manual(
-    values = c("Basal-like" = "mediumorchid3",
-               "Luminal A" = "springgreen4",
-               "Luminal B" ="red1",
-               "HER2-enriched" = "#0072B2")
+    values = c("Basal-like" = "red",
+               "Luminal A" = "green",
+               "Luminal B" ="orange",
+               "HER2-enriched" = "purple")
   ) +
-  theme_half_open(12) + background_grid()
+  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+       x = "Fitted PC1 (39.538 %)", 
+       y = "Fitted PC2 (14.549 %)",
+       color = "Tumor") +
+  theme_half_open(12) + 
+  background_grid() +
+  theme(plot.title = element_text(hjust = 0.5))
 ```
 
-ER_PR_HER2
-
-```{r}
-pca_PAM50_fit |>
-  augment(prot_clin_cancer) |> 
-  ggplot(aes(.fittedPC1, .fittedPC2, color = ER_PR_HER2)) + 
-  geom_point(size = 1.5) +
-  scale_color_manual(
-    values = c("1" = "mediumorchid3",
-               "2" = "springgreen4",
-               "0" ="red1",
-               "3" = "#0072B2",
-               "4" = "coral",
-               "5" = "turquoise3",
-               "6" = "gold3",
-               "7" = "deeppink")
-            ) +
-  theme_half_open(12) + background_grid()
-```
-
-As occurred in the previous section, the variance explained greatly resembles the values obtained with the proteomic data for the PAM50 proteins for all individuals.
-
-```{r}
-pca_PAM50_fit |>
-  tidy(matrix = "eigenvalues")
-```
-
-```{r}
-pca_PAM50_fit |>
-  tidy(matrix = "eigenvalues") |>
-  ggplot(aes(PC, percent)) +
-  geom_col(fill = "#56B4E9", alpha = 0.8) +
-  scale_x_continuous(breaks = 1:10) +
-  scale_y_continuous(
-    labels = scales::percent_format(),
-    expand = expansion(mult = c(0, 0.01))
-  ) +
-  theme_minimal_hgrid(12)
-```
+In this last section, we get a very clear separation between individuals suffering from TNBC and the rest, and we also see possible clustering regarding cancer subtypes.
