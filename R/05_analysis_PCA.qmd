@@ -696,13 +696,18 @@ pca_PAM50_fit |>
   labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
-       color = "Tumor") +
+       color = "TNBC") +
   theme_half_open(12) + 
   background_grid() +
   theme(plot.title = element_text(hjust = 0.5))
+
 ```
 
-Age
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/PCA_TNBC_PAM50_clinical.png", plot = last_plot(), device = "png")
+```
 
 ```{r}
 pca_PAM50_fit |>
@@ -717,7 +722,7 @@ pca_PAM50_fit |>
   labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
-       color = "Tumor") +
+       color = "Age group") +
   theme_half_open(12) + 
   background_grid() +
   theme(plot.title = element_text(hjust = 0.5))
@@ -741,6 +746,12 @@ pca_PAM50_fit |>
   theme_half_open(12) + 
   background_grid() +
   theme(plot.title = element_text(hjust = 0.5))
+```
+
+```{r}
+#| eval: true
+#| echo: false
+ggsave("../results/PCA_Csubtype_PAM50_clinical.png", plot = last_plot(), device = "png")
 ```
 
 In this last section, we get a very clear separation between individuals suffering from TNBC and the rest, and we also see possible clustering regarding cancer subtypes.
