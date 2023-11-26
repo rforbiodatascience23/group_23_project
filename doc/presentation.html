@@ -8,7 +8,7 @@
 <link href="presentation_files/libs/quarto-html/light-border.css" rel="stylesheet">
 <link href="presentation_files/libs/quarto-html/quarto-html.min.css" rel="stylesheet" data-mode="light">
 <link href="presentation_files/libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="stylesheet" id="quarto-text-highlighting-styles"><meta charset="utf-8">
-  <meta name="generator" content="quarto-1.3.353">
+  <meta name="generator" content="quarto-1.3.433">
 
   <meta name="author" content="Group_23">
   <title>Final Project: A protein expression analysis of Breast Cancer</title>
@@ -404,13 +404,15 @@ Group_23
 </section>
 <section id="introduction" class="slide level2">
 <h2>Introduction</h2>
+<div style="font-size: 0.8em; text-align: left">
 <p>The data set consists of:</p>
 <ul>
 <li class="fragment"><p>iTRAQ proteome profiling of 77 breast cancer samples + 3 healthy samples, with expression values for ~12.000 proteins for each sample.</p></li>
 <li class="fragment"><p>A file containing the clinical data of the 77 breast cancer patients (TCGA ID, sex, age, tumor receptors, etc.).</p></li>
 <li class="fragment"><p>A file containing the list of genes and proteins used by the PAM50 classification system.</p></li>
 </ul>
-<p>The analysis is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.</p>
+<p>The analysis of this data set is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.</p>
+</div>
 </section>
 <section id="materials-and-methods" class="slide level2">
 <h2>Materials and methods</h2>
@@ -419,6 +421,7 @@ Group_23
 <section id="materials-and-methods-1" class="slide level2">
 <h2>Materials and methods</h2>
 <h3 id="description-of-relevant-variables">Description of relevant variables</h3>
+<div style="font-size: 0.7em; text-align: left">
 <ul>
 <li class="fragment"><p>Dropped variables (redundant or not relevant): Survival.Data.Form, Days.to.date.of.Death, Days.to.Date.of.Last.Contact, OS.Time, Vital.Status, Tumor..T1.Coded, Metastasis.Coded, AJCC.Stage, Converted.Stage and all the columns destined to cluster the data</p></li>
 <li class="fragment"><p>Created variables:</p>
@@ -430,6 +433,7 @@ Group_23
 <li class="fragment"><p>AJCC.Simp: simplified AJCC stages (I, II, III, and IV)</p></li>
 </ul></li>
 </ul>
+</div>
 </section>
 <section id="materials-and-methods-2" class="slide level2">
 <h2>Materials and methods</h2>
@@ -500,6 +504,20 @@ Group_23
 <figure>
 <p><img data-src="../results/Kmeans_PAM50_clusters.png" style="width:50.0%"></p>
 </figure>
+</div>
+</div>
+</div>
+</section>
+<section id="analysis-1.-pca." class="slide level2">
+<h2>Analysis 1. PCA.</h2>
+<div class="columns">
+<div class="column" style="width:50%;">
+<div class="fragment">
+<p><img data-src="../results/PCA_TNBC_PAM50_clinical.png" class="absolute" style="top: 70px; width: 550px; height: 574px; "></p>
+</div>
+</div><div class="column" style="width:50%;">
+<div class="fragment">
+<p><img data-src="../results/PCA_Csubtype_PAM50_clinical.png" class="absolute" style="top: 70px; left: 600px; width: 550px; height: 574px; "></p>
 </div>
 </div>
 </div>

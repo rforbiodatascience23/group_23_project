@@ -12,6 +12,7 @@ css: style.css
 
 ## Introduction
 
+::: {style="font-size: 0.8em; text-align: left"}
 The data set consists of:
 
 -   iTRAQ proteome profiling of 77 breast cancer samples + 3 healthy samples, with expression values for \~12.000 proteins for each sample.
@@ -21,6 +22,7 @@ The data set consists of:
 -   A file containing the list of genes and proteins used by the PAM50 classification system.
 
 The analysis of this data set is relevant for multiple potential applications: expression analysis to identify biomarkers, understand disease heterogeneity, and infer personalized treatment strategies in breast cancer.
+:::
 
 ## Materials and methods
 
@@ -32,6 +34,7 @@ The analysis of this data set is relevant for multiple potential applications: e
 
 ### Description of relevant variables
 
+::: {style="font-size: 0.7em; text-align: left"}
 -   Dropped variables (redundant or not relevant): Survival.Data.Form, Days.to.date.of.Death, Days.to.Date.of.Last.Contact, OS.Time, Vital.Status, Tumor..T1.Coded, Metastasis.Coded, AJCC.Stage, Converted.Stage and all the columns destined to cluster the data
 
 -   Created variables:
@@ -45,6 +48,7 @@ The analysis of this data set is relevant for multiple potential applications: e
     -   TNBC: 0 if positive, 1 if negative
 
     -   AJCC.Simp: simplified AJCC stages (I, II, III, and IV)
+:::
 
 ## Materials and methods
 
@@ -110,5 +114,21 @@ PAM50_cluster_data |>
 
 ::: {.column width="60%"}
 ![](../results/Kmeans_PAM50_clusters.png){fig-align="right" width="50%"}
+:::
+:::
+
+## Analysis 1. PCA.
+
+::: columns
+::: {.column width="50%"}
+::: fragment
+![](../results/PCA_TNBC_PAM50_clinical.png){.absolute top="70" height="574" width="550"}
+:::
+:::
+
+::: {.column width="50%"}
+::: fragment
+![](../results/PCA_Csubtype_PAM50_clinical.png){.absolute top="70" left="600" height="574" width="550"}
+:::
 :::
 :::
