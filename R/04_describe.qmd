@@ -269,9 +269,6 @@ When accounting both for the age range and the stage of the tumor, the stage 2 i
 The variable "Node" refers to the number of nearby lymph nodes that have cancer. According to the National Cancer Institute:
 
 -   N0: There is no cancer in nearby lymph nodes.
-
-<!-- -->
-
 -   N1, N2, N3: Refers to the number and location of lymph nodes that contain cancer. The higher the number after the N, the more lymph nodes that contain cancer.
 
 ```{r}
@@ -281,17 +278,17 @@ prot_clin_cl |>
 
 Most of the patients in our data set do not have cancer in the nearby lymph nodes.
 
-### 04.2.10. Node distribution
+### 04.2.10. Node Cancer
 
-This variable condenses the information from the variable before, classifying as "Positive" every tumor with regional lymph nodes (N) and as "Negative" the N0 tumors, so with the data extracted before we can infer that there are 40 negative samples, 40 positive an 3 without clinical data for this variable (the healthy samples).
+This variable condenses the information from the variable before, classifying as 1, which means Positive, every tumor with regional lymph nodes (N) and as 0, which means Negative, the N0 tumors, so with the data extracted before we can infer that there are 40 negative samples, 40 positive an 3 without clinical data for this variable (the healthy samples).
 
 ```{r}
 prot_clin_cl |>
-  group_by(Age.Menopausal.group, Node.Coded) |>
+  group_by(Age.Menopausal.group, Node_Cancer) |>
   count() 
 ```
 
-We can see that the presence of nearby lymph nodes that have cancer does not seem to be dependent on the age, since all three age groups apparently have the same distribution of "Positives" and "Negatives" for this variable.
+We can see that the presence of nearby lymph nodes that have cancer does not seem to be dependent on the age, since all three age groups apparently have the same distribution of "Positives" and "Negatives" (1s and 0s) for this variable.
 
 ### 04.2.11. Metastasis
 

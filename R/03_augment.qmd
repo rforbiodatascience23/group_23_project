@@ -130,9 +130,9 @@ prot_clin_cl <- prot_clin_cl |>
   rename(ER = ER.Status, PR = PR.Status, HER2 = HER2.Final.Status) |>
   mutate(
     TNBC = case_when(
-      is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_character_,
-      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ "0",
-      TRUE ~ "1" # All other cases
+      is.na(ER) | is.na(PR) | is.na(HER2) ~ NA_real_,
+      ER == "Negative" & PR == "Negative" & HER2 == "Negative" ~ 1,
+      TRUE ~ 0 # All other cases
     )
   )
 
@@ -216,6 +216,21 @@ prot_clin_cl <- prot_clin_cl |>
                                         "Stage III",
                                         "Stage II", 
                                         "Stage I")))
+```
+
+### 03.2.5. Rename and encode Node.Coded column
+
+The Node.Coded column will be renamed to get the name Node_Cancer. Additionally, the values that are coded as "Positive" will receive the value 1, and those coded as "Negative" will receive the value 0. This minor changes are with regards to further Differential Expression Analysis.
+
+```{r}
+prot_clin_cl <- prot_clin_cl |>
+  rename(Node_Cancer = Node.Coded) |>
+  mutate(
+    Node_Cancer = case_when(
+      Node_Cancer == "Positive"  ~ 1,
+      Node_Cancer == "Negative" ~ 0
+    )
+  )
 ```
 
 ## 03.3. Relocate columns
