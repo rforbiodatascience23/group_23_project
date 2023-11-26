@@ -194,7 +194,7 @@ tnbc_not_basal |>
 
 ## 07.6. Conclusion
 
-The study of differential expression of proteins is crucial for several reasons, among them that it allows to identify which signature proteins are associated with each subtype of cancer, which could shed light into the molecular differences which lead cancer development and progressions. It could potentially be useful regarding the different therapies that can be developed fr cancer treatment, as some of these proteins could potentially be therapeutic targets or new biomarkers.
+The study of differential expression of proteins is crucial for several reasons, among them that it allows to identify which signature proteins are associated with each subtype of cancer, which could shed light into the molecular differences which lead cancer development and progressions. It could potentially be useful regarding the different therapies that can be developed for cancer treatment, as some of these proteins could potentially be therapeutic targets or new biomarkers.
 
 In the present analysis it has been proven that there is a difference in the protein expression profile of patients with TNBC and patients that do not have TNBC. On the other hand, almost none difference in the protein expression profile have been found between patients that develop cancer in the nearby lymph node and those who do not. Only one protein is differently expressed between these two sets of patients. Furthermore, there are not significant differences in the expression of this proteins between patients with TNBC and patients without TNBC. This indicates that it does not seem to be any kind of relationship between these conditions which have been tested.
 
