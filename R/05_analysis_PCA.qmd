@@ -218,7 +218,7 @@ pca_scores <- as.data.frame(predict(pca_PAM50_fit))
 
 ggplot(pca_scores, aes(PC1, PC2)) + 
   geom_point(size = 1.5, color = "cornflowerblue") +
-  labs(title = "PCA scores, proteomic data, all individuals",
+  labs(title = "PCA scores, PAM50 proteomic data, all individuals",
        x = "PC1", 
        y = "PC2") +
   theme_half_open(12) + 
@@ -254,7 +254,7 @@ pca_PAM50_fit |>
             color = "black", 
             size = 2) +
   theme_minimal_hgrid(12) +
-  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+  labs(title = "Variance explained by each PC. PAM50 proteomic data, all individuals",
        x = "Principal Component (PC)",
        y = "Percentage of variance explained (%)") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -363,7 +363,7 @@ pca_PAM50_fit |>
   labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
        x = "Fitted PC1 (33.238 %)", 
        y = "Fitted PC2 (14.549 %)",
-       color = "AJCC Stage") +
+       color = "TNBC") +
   theme_half_open(12) + 
   background_grid() +
   theme(plot.title = element_text(hjust = 0.5))
@@ -401,7 +401,6 @@ columns_to_encode <- c("Gender",
                        "TNBC", 
                        "Tumor",
                        "Node",
-                       "Node.Coded",
                        "Metastasis",
                        "AJCC.Simp",
                        "PAM50.mRNA",
@@ -462,7 +461,7 @@ pca_prot_fit |>
             color = "black", 
             size = 2) +
   theme_minimal_hgrid(12) +
-  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+  labs(title = "Variance explained by PCs. All proteomic and clinical data, cancer",
        x = "Principal Component (PC)",
        y = "Percentage of variance explained (%)") +
   theme(plot.title = element_text(hjust = 0.5))
@@ -635,7 +634,7 @@ pca_PAM50_fit |>
             color = "black", 
             size = 2) +
   theme_minimal_hgrid(12) +
-  labs(title = "Variance explained by each PC. All proteomic data, all individuals",
+  labs(title = "Variance explained by PCs. PAM50 proteomic, clincal data, cancer",
        x = "Principal Component (PC)",
        y = "Percentage of variance explained (%)") +
   theme(plot.title = element_text(hjust = 0.5))
