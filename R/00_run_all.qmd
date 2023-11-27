@@ -1,0 +1,129 @@
+---
+title: "00 - Run all .qmd files"
+format: html
+author: Group_23
+date: "2023-11-08"
+editor: visual
+---
+
+# 00.Run all .qmd files
+
+## 00.1. Install required packages for entire project
+
+```{r}
+if (!requireNamespace("tidyverse", 
+                      quietly = TRUE)) { install.packages("tidyverse", 
+                                                          dependencies = TRUE) }
+
+if (!requireNamespace("broom", 
+                      quietly = TRUE)) { install.packages("broom", 
+                                                          dependencies = TRUE) }
+
+if (!requireNamespace("cowplot", 
+                      quietly = TRUE)) { install.packages("cowplot", 
+                                                          dependencies = TRUE) }
+
+if (!requireNamespace("patchwork", 
+                      quietly = TRUE)) { install.packages("patchwork", 
+                                                          dependencies = TRUE) }
+
+if (!requireNamespace("ggrepel", 
+                      quietly = TRUE)) { install.packages("ggrepel", 
+                                                          dependencies = TRUE) }
+
+if (!requireNamespace("rentrez", 
+                      quietly = TRUE)) { install.packages("rentrez", 
+                                                          dependencies = TRUE) }
+
+```
+
+## 002.Install all required packages for the project via the custom check_and_install_libraries() function
+
+```{r}
+library("here")
+source(here("R/99_proj_func.R"))
+check_and_install_packages(dir_path=here("R"))
+```
+
+## 003.Run all the quarto documents in the project.
+
+```{r}
+library("quarto")
+```
+
+```{r}
+
+# 01_load.qmd
+
+quarto_render(
+  input = here("R/01_load.qmd"),
+  output_file = "01_load.html"
+)
+
+file.rename(from =  here("results/R/01_load.html"),
+            to =  here("results/01_load.html"))
+
+## 02_clean.qmd
+
+quarto_render(
+  input = here("R/02_clean.qmd"),
+  output_file = "02_clean.html"
+)
+
+file.rename(from =  here("results/R/02_clean.html"),
+            to =  here("results/02_clean.html"))
+
+## 03_augment.qmd
+
+quarto_render(
+  input = here("R/03_augment.qmd"),
+  output_file = "03_augment.html"
+)
+
+file.rename(from =  here("results/R/03_augment.html"),
+            to =  here("results/03_augment.html"))
+
+# 04_describe.qmd
+
+quarto_render(
+  input = here("R/04_describe.qmd"),
+  output_file = "04_describe.html"
+)
+
+file.rename(from =  here("results/R/04_describe.html"),
+            to =  here("results/04_describe.html"))
+
+
+# 05_analysis_1.qmd
+
+quarto_render(
+  input = here("R/05_analysis_1.qmd"),
+  output_file = "05_analysis_1.html"
+)
+
+file.rename(from =  here("results/R/05_analysis_1.html"),
+            to =  here("results/05_analysis_1.html"))
+
+
+# 06_analysis_2.qmd
+
+quarto_render(
+  input = here("R/06_analysis_2.qmd"),
+  output_file = "06_analysis_2.html"
+)
+
+file.rename(from =  here("results/R/06_analysis_2.html"),
+            to =  here("results/06_analysis_2.html"))
+
+# 07_analysis_3.qmd
+
+quarto_render(
+  input = here("R/07_analysis_3.qmd"),
+  output_file = "07_analysis_3.html"
+)
+
+file.rename(from =  here("results/R/07_analysis_3.html"),
+            to =  here("results/07_analysis_3.html"))
+
+
+```
