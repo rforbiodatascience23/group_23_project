@@ -64,7 +64,7 @@ Description of relevant variables
 
     -   ER_PR_HER2: level from 0 to 7 depending on hormonal receptors (ER, PR) present an the level of HER2.
 
-    -   TNBC: 0 if positive, 1 if negative
+    -   TNBC: 1 if positive, 0 if negative
 
     -   AJCC.Simp: simplified AJCC stages (I, II, III, and IV)
 :::
