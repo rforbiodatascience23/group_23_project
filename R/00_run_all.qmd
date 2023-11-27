@@ -48,6 +48,7 @@ if (!requireNamespace("quarto",
 ## 002.Install all required packages for the project via the custom check_and_install_libraries() function
 
 ```{r}
+#| warning: false
 library("here")
 source(here("R/99_proj_func.R"))
 ```
@@ -60,6 +61,10 @@ library("quarto")
 ```
 
 ```{r}
+#| eval: true
+#| echo: true
+#| warning: false
+#| output: false
 
 # 01_load.qmd
 
