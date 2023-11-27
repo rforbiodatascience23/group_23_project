@@ -108,7 +108,7 @@ meno_age_group_members <- prot_clin_cl |>
         name = "Total")
 
 meno_age_group_tnbc_positive <- prot_clin_cl |>
-  filter(TNBC == '0') |>
+  filter(TNBC == "1") |>
   count(Age.Menopausal.group, 
         name = "TNBC_Positive")
 
@@ -236,7 +236,7 @@ prot_clin_cl |>
   count(TNBC) 
 ```
 
-From this table we can extract that 19 patients are TNBC (encoded as 0 in this variable). The 61 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels (encoded as 1).
+From this table we can extract that 19 patients are TNBC (encoded as 1 in this variable). The 61 remaining patients (83 total minus 3 NA samples for these attributes) show either one of the receptors or high HER-2 levels (encoded as 0).
 
 ### 04.2.8. ER/PR/HER2 status distribution
 
@@ -278,7 +278,7 @@ prot_clin_cl |>
   count()
 ```
 
-As pointed out before, the most common cancer amongst the younger patients is the type 0 or TNBC, while both in the meddle-aged and older groups of patients, the most common cancer is type 4 or ER/PR positive.
+As pointed out before, the most common cancer among the younger patients is the type 0 or TNBC, while both in the meddle-aged and older groups of patients, the most common cancer is type 4 or ER/PR positive.
 
 ### 04.2.9. Tumor stage distribution
 
@@ -317,7 +317,7 @@ prot_clin_cl |>
   count(Node)
 ```
 
-Most of the patients in our data set do not have cancer in the nearby lymph nodes. This is relvant as the spread of cancer to the lymph nodes can be an indicator of metatastasis or the stage of the cancer.
+Most of the patients in our data set do not have cancer in the nearby lymph nodes. This is relevant as the spread of cancer to the lymph nodes can be an indicator of metastasis or the stage of the cancer.
 
 ### 04.2.10. Node Cancer
 
