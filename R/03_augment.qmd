@@ -124,7 +124,7 @@ prot_clin_cl |>
 
 The only individuals that have NA values for `ER.Status`, `PR.Status`, or `HER2.Final.Status` are the 3 healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the `TNBC` column.
 
-As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value 0, while the rest will be assigned 1.
+As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, `TNBC` , individuals with TNBC will store the value 11 while the rest will be assigned 0.
 
 ```{r}
 prot_clin_cl <- prot_clin_cl |>
