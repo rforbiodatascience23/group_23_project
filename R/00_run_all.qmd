@@ -1,8 +1,9 @@
 ---
 title: "00 - Run all .qmd files"
-format: html
-author: Group_23
-date: "2023-11-08"
+author: "Group_23"
+format:
+  html:
+    embed-resources: true
 editor: visual
 ---
 
@@ -35,6 +36,13 @@ if (!requireNamespace("rentrez",
                       quietly = TRUE)) { install.packages("rentrez", 
                                                           dependencies = TRUE) }
 
+if (!requireNamespace("here", 
+                      quietly = TRUE)) { install.packages("here", 
+                                                          dependencies = TRUE) }
+
+if (!requireNamespace("quarto", 
+                      quietly = TRUE)) { install.packages("quarto", 
+                                                          dependencies = TRUE) }
 ```
 
 ## 002.Install all required packages for the project via the custom check_and_install_libraries() function
@@ -47,6 +55,7 @@ source(here("R/99_proj_func.R"))
 ## 003.Run all the quarto documents in the project.
 
 ```{r}
+#| warning: false
 library("quarto")
 ```
 

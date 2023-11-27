@@ -3169,7 +3169,7 @@ vertical-align: -.125em;
 </div>
 </div>
 <p>The only individuals that have NA values for <code>ER.Status</code>, <code>PR.Status</code>, or <code>HER2.Final.Status</code> are the 3 healthy individuals. Since they do not suffer from cancer, it would not make sense to impute any value for them, so they will also have NA values for the <code>TNBC</code> column.</p>
-<p>As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, <code>TNBC</code> , individuals with TNBC will store the value 0, while the rest will be assigned 1.</p>
+<p>As done before, the variables are renamed to allow a cleaner code. In this case, they are not restored to their original names, as the new ones are sufficiently informative. In the new column, <code>TNBC</code> , individuals with TNBC will store the value 11 while the rest will be assigned 0.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>prot_clin_cl <span class="ot">&lt;-</span> prot_clin_cl <span class="sc">|&gt;</span></span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">ER =</span> ER.Status, <span class="at">PR =</span> PR.Status, <span class="at">HER2 =</span> HER2.Final.Status) <span class="sc">|&gt;</span></span>

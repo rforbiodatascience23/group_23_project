@@ -151,7 +151,7 @@ pca_prot_fit |>
                T3 = "orange",
                T4 = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. Protemoic data, all individuals",
+  labs(title = "PCA scores. proteomic data, all individuals",
        x = "Fitted PC1 (13.198 %)", 
        y = "Fitted PC2 (8.781 %)",
        color = "Tumor type") +
@@ -175,7 +175,7 @@ pca_prot_fit |>
                "Stage III" = "orange",
                "Stage IV" = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. Protemoic data, all individuals",
+  labs(title = "PCA scores. proteomic data, all individuals",
        x = "Fitted PC1 (13.198 %)", 
        y = "Fitted PC2 (8.781 %)",
        color = "AJCC Stage") +
@@ -282,8 +282,8 @@ prot_clin_exp <- prot_clin_exp |>
   mutate(
     TNBC_status = case_when(
       row_number() > n() - 3 ~ "Healthy",
-      TNBC == "0" ~ "Positive",
-      TNBC == "1" ~ "Negative",
+      TNBC == "0" ~ "Negative",
+      TNBC == "1" ~ "Positive",
     )
   ) |>
   relocate(TNBC_status, .after = TNBC)
@@ -302,7 +302,7 @@ pca_PAM50_fit |>
                T3 = "orange",
                T4 = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+  labs(title = "PCA scores. Proteomic PAM50 data, all individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "Tumor type") +
@@ -322,7 +322,7 @@ pca_PAM50_fit |>
                "Stage III" = "orange",
                "Stage IV" = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+  labs(title = "PCA scores. proteomic PAM50 data, all individuals",
        x = "Fitted PC1 (33.238 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "AJCC Stage") +
@@ -342,7 +342,7 @@ pca_PAM50_fit |>
                "Luminal B" = "orange",
                "HER2-enriched" = "purple",
                Healthy = "blue")) +
-  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+  labs(title = "PCA scores. proteomic PAM50 data, all individuals",
        x = "Fitted PC1 (39.238 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "Cancer subtype") +
@@ -360,7 +360,7 @@ pca_PAM50_fit |>
     values = c("Negative" = "purple",
                "Positive" = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. Protemoic PAM50 data, all individuals",
+  labs(title = "PCA scores. proteomic PAM50 data, all individuals",
        x = "Fitted PC1 (33.238 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "TNBC") +
@@ -490,7 +490,7 @@ pca_prot_fit |>
                T3 = "orange",
                T4 = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. All proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (12.691 %)", 
        y = "Fitted PC2 (8.757 %)",
        color = "Tumor type") +
@@ -510,7 +510,7 @@ pca_prot_fit |>
                "Stage III" = "orange",
                "Stage IV" = "red",
                Healthy = "blue")) +
-  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. All proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (12.691 %)", 
        y = "Fitted PC2 (8.757 %)",
        color = "AJCC stage") +
@@ -527,7 +527,7 @@ pca_prot_fit |>
   scale_color_manual(
     values = c("Positive" = "red",
                "Negative" = "blue")) +
-  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. All proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (12.691 %)", 
        y = "Fitted PC2 (8.757 %)",
        color = "TNBC") +
@@ -546,7 +546,7 @@ pca_prot_fit |>
                "[45, 55)" = "green",
                "[55, 90)" = "red")
   ) +
-  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. All proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (12.691 %)", 
        y = "Fitted PC2 (8.557 %)",
        color = "Age group") +
@@ -565,7 +565,7 @@ pca_prot_fit |>
                "Luminal A" = "green",
                "Luminal B" ="orange",
                "HER2-enriched" = "purple")) +
-  labs(title = "PCA scores. All protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. All proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (12.691 %)", 
        y = "Fitted PC2 (8.557 %)",
        color = "Cancer subtype") +
@@ -653,7 +653,7 @@ pca_PAM50_fit |>
                T3 = "blue",
                T4 = "red"
                )) +
-  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. PAM50 proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "Tumor") +
@@ -674,7 +674,7 @@ pca_PAM50_fit |>
                "Stage IV" = "red",
                Healthy = "blue")
   ) +
-  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. PAM50 proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "AJCC Stage") +
@@ -692,7 +692,7 @@ pca_PAM50_fit |>
     values = c("Positive" = "red1",
                "Negative" = "blue")
   ) +
-  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. PAM50 proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "TNBC") +
@@ -719,7 +719,7 @@ pca_PAM50_fit |>
                "[45, 55)" = "green",
                "[55, 90)" = "red")
   ) +
-  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. PAM50 proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "Age group") +
@@ -739,7 +739,7 @@ pca_PAM50_fit |>
                "Luminal B" ="orange",
                "HER2-enriched" = "purple")
   ) +
-  labs(title = "PCA scores. PAM50 protemoic and clinical data, cancer individuals",
+  labs(title = "PCA scores. PAM50 proteomic and clinical data, cancer individuals",
        x = "Fitted PC1 (39.538 %)", 
        y = "Fitted PC2 (14.549 %)",
        color = "Tumor") +
