@@ -279,13 +279,11 @@ volcano_plot <- function(data, condition_test){
 
 -   Triple Negative Breast Cancer (TNBC) individuals show a different protein expression profile compared to Non-Triple Negative Breast Cancer.
 
-    -   This is relevant as different proteins and functions could define the degree of development and aggressiveness of the breast cancer tumors from an individual.
-
 -   The protein expression profiles from breast cancer affected individuals can be differentially clustered into the PAM50 gene classification system of breast cancer subtypes.
 
--   According to the breast cancer proteomes analysed in this project, there are at least 84 proteins down-expressed and 115 up-expressed in TNBC individuals when comparing them to non-TNBC.
+-   There are at least 84 proteins down-expressed and 115 up-expressed in TNBC individuals when comparing them to non-TNBC.
 
--   According to the breast cancer proteomes analysed in this project, there seems to be no differential expression between breast cancer tumors allocated or not allocated in lymph nodes.
+-   There seems to be no differential expression between breast cancer tumors allocated or not allocated in lymph nodes.
 
     -   Only 1 protein (NP_002094.2: glycogen [starch] synthase, muscle isoform 1) seems to be significantlly down-expressed in individuals with breast cancer tumors allocated in lymph nodes.
 :::
