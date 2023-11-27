@@ -1,6 +1,6 @@
 ---
 title: "Final Project: A protein expression analysis of Breast Cancer"
-author: "Group 23"
+author: "Group 23: Ana Pastor Mediavilla (s222761), Amanda Jimenez Lobato (s233150), Carlos de Santiago León (s222766), Laura Figueiredo Tor (s222797), Monika Karolina Borkowska (s223203)"
 format: 
   revealjs: 
     embed-resources: true
